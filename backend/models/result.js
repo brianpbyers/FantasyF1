@@ -1,0 +1,1 @@
+module.exports.Result = Result;
