@@ -4,7 +4,7 @@ db.query('DROP TABLE IF EXISTS user, league, team, driver, constructor, race, re
         console.log("error dropping tables",error);
     }else{
         console.log("Dropped Tables!");
-        db.query('CREATE TABLE user (id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, username varchar(45) NOT NULL, password varchar(45) NOT NULL, name varchar(45) NOT NULL);',(error, results)=>{
+        db.query('CREATE TABLE user (id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, email varchar(45) NOT NULL, password varchar(255) NOT NULL, name varchar(45) NOT NULL);',(error, results)=>{
             if(error){
                 console.log('error creating user table:',error);
             }else{

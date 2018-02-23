@@ -8,13 +8,13 @@ let authController = require('../controllers/authController');
 router.route('/test')
     .get(mainController.getTest);   
 
-// router.route('/signup')
-//     .post(authController.signup);
+router.route('/api/signup')
+    .post(authController.signup);
 
-// router.route('/login')
-//     .post(authController.login);
+router.route('/api/login')
+    .post(authController.login);
 
-router.route('/leagues')
+router.route('/api/leagues')
     .get(mainController.getLeagues);
 
 module.exports = router;
