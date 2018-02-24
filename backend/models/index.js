@@ -6,7 +6,7 @@ require('dotenv').config();
 // password:process.env.DB_PASSWORD,
 // database:process.env.DB_DATABASE,
 // port:process.env.DB_PORT
-console.log('hello!');
+console.log('hit index.js!');
 console.log(process.env.DB_HOST);
 let connection = mysql.createConnection({
     host:process.env.DB_HOST,
