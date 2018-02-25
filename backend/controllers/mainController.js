@@ -65,29 +65,39 @@ let postLeague = (req, res)=>{
 let joinLeague = (req, res)=>{
     let user = auth.decodeToken(req);
     console.log('in Join league');
-    db.query(`SELECT * FROM user_league WHERE user_id=${user.id} AND league_id=${req.body.leagueId}`,(error, results)=>{
+    db.query(`SELECT * FROM league WHERE id=${req.body.leagueId}`,(error,results)=>{
         if(error){
-            console.log("error checking if user already exists in league:",error);
-            res.json({});
-        }else if(results[0]){
-            console.log(results);
-            console.log("User already in league!");
-            res.json({success:false, msg:"User already in league!"});
+            console.log("error checking if league exists!",error);
+            res.json({success:false, msg:"error checking for league existence"});
+        }else if(!results[0]){
+            console.log("League doesn't exist!");
+            res.json({success:false, msg:"Couldn't find league"});
         }else{
-            console.log('putting user into league');
-            db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${req.body.leagueId});`,(error, results)=>{
+            db.query(`SELECT * FROM user_league WHERE user_id=${user.id} AND league_id=${req.body.leagueId}`,(error, results)=>{
                 if(error){
-                    console.log('there has been an error putting user into league:',error);
-                    res.json({success:false, msg:"there has been an error putting user into league"});
+                    console.log("error checking if user already exists in league:",error);
+                    res.json({});
+                }else if(results[0]){
+                    console.log(results);
+                    console.log("User already in league!");
+                    res.json({success:false, msg:"User already in league!"});
                 }else{
-                    console.log('successfully inserted user into league');
-                    db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${req.body.leagueId},0)`,(error, results)=>{
+                    console.log('putting user into league',results[0]);
+                    db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${req.body.leagueId});`,(error, results)=>{
                         if(error){
-                            console.log('there has been an error creating your team:', error);
-                            res.json({success:false, msg:"There has been an error creating your team"});
+                            console.log('there has been an error putting user into league:',error);
+                            res.json({success:false, msg:"there has been an error putting user into league"});
                         }else{
-                            console.log('Created a team!', results);
-                            res.json({success:true, msg:"Team Created!"});
+                            console.log('successfully inserted user into league');
+                            db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${req.body.leagueId},0)`,(error, results)=>{
+                                if(error){
+                                    console.log('there has been an error creating your team:', error);
+                                    res.json({success:false, msg:"There has been an error creating your team"});
+                                }else{
+                                    console.log('Created a team!', results);
+                                    res.json({success:true, msg:"Team Created!"});
+                                }
+                            })
                         }
                     })
                 }

@@ -2,7 +2,7 @@ const express = require('express');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const patch = require('path');
-const passport = require('passport');
+// const passport = require('passport');
 const router = require('./config/routes');
 require('dotenv').config();
 
