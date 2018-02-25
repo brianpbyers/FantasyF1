@@ -2,9 +2,9 @@ import { Link } from 'react-router-dom';
 import React, { Component } from 'react';
 import Header from '../Header/Header';
 import axios from 'axios';
-import './Leagues.css';
+import './Teams.css';
 
-class Leagues extends Component{
+class Teams extends Component{
 
     componentWillMount(){
         if(!localStorage.getItem("f1creds")){
@@ -14,10 +14,10 @@ class Leagues extends Component{
     }
 
     componentDidMount(){
-        axios.get('http://localhost:3000/api/leagues',{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.get(`http://localhost:3000/api/teams/${this.props.match.params.leagueId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('got results!',results);
-            this.setState({leagues: results.data});
+            this.setState({teams: results.data});
         })
         .catch((error)=>{
             console.log('caught error:',error);
@@ -30,12 +30,12 @@ class Leagues extends Component{
 
     render(){
         console.log(this.state);
-        let leagueList;
-        if(this.state && this.state.leagues && this.state.leagues[0]){
-            console.log('creating league list!', this.state.leagues);
-            leagueList = this.state.leagues.map((league)=>
-                <li key={league.id}>
-                    <Link to={`/teams/${league.id}`}>{league.name}</Link>
+        let teamList;
+        if(this.state && this.state.teams && this.state.teams[0]){
+            console.log('creating team list!', this.state.teams);
+            teamList = this.state.teams.map((team)=>
+                <li key={team.id}>
+                    <Link to={`/teams/${team.id}`}>{team.name}</Link>
                 </li>
             );
         }
@@ -43,12 +43,12 @@ class Leagues extends Component{
             <div>
                 <Header />
                 <p className="App-intro">
-                    Should list all the leagues here!
+                    Should list all the teams here!
                 </p>
-                <ul>My Leagues{leagueList}</ul>
+                <ul>My Teams{teamList}</ul>
             </div>
         )
     }
 }
 
-export default Leagues;
+export default Teams;
