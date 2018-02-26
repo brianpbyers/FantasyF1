@@ -123,48 +123,72 @@ let getTeams = (req, res)=>{
 }
 
 //update the team 0 to requested specifications.  Want an array of drivers and an array of constructors in req.body
+// UPDATE team_constructor SET constructor_id=(CASE WHEN position = 1 THEN 1
+//     WHEN position = 2 THEN 3
+//     WHEN position = 3 THEN 4
+//     WHEN position = 4 THEN 5
+//     WHEN position = 5 THEN 6 END) WHERE team_id = 5;
 let postTeam = (req, res)=>{
     res.json('WOOO!  YOU GOT TO POSTLEAGUETEAMS!');
+}
+
+let canUserEdit = (userId, teamId, callback)=>{
+    db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
+        if(error){
+            console.log("there has been an error finding user/team combo",error);
+            callback(false);
+        }else if(results && results[0]){
+            console.log('results of user/team search:',results);
+            callback(true);
+        }else{
+            console.log('user should not be able to edit this team',results);
+            callback(false);
+        }
+
+    })
 }
 
 let getTeam = (req, res)=>{
     let user = auth.decodeToken(req);
     let teamId = req.params.teamId;
     let retObj={};
-    db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
-        if(error){
-            console.log("Error getting constructors for this team",error);
-            res.json({success:false, msg:"Error getting constructors for this team"});
-        }else{
-            console.log(results);
-            retObj.teamConstructors=results;
-            db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
-                if(error){
-                    console.log("Error getting drivers for this team",error);
-                    res.json({success:false, msg:"Error getting drivers for this team"});
-                }else{
-                    retObj.teamDrivers=results;
-                    db.query('SELECT id, name FROM constructor',(error, results)=>{
-                        if(error){
-                            console.log("Error grabbing all constructors",error);
-                            res.json({success:false, msg:"Error grabbing all constructors"});
-                        }else{
-                            retObj.constructors=results;
-                            db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
-                                if(error){
-                                    console.log("Error Grabbing Drivers",error);
-                                    res.json({success:false, msg:"Error grabbing drivers"});
-                                }else{
-                                    retObj.drivers=results;
-                                    retObj.success=true;
-                                    res.json(retObj);
-                                }
-                            })
-                        }
-                    })
-                }
-            })
-        }
+    canUserEdit(user.id, teamId,(canEdit)=>{
+        retObj.canEdit=canEdit;
+        db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
+            if(error){
+                console.log("Error getting constructors for this team",error);
+                res.json({success:false, msg:"Error getting constructors for this team"});
+            }else{
+                console.log(results);
+                retObj.teamConstructors=results;
+                db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
+                    if(error){
+                        console.log("Error getting drivers for this team",error);
+                        res.json({success:false, msg:"Error getting drivers for this team"});
+                    }else{
+                        retObj.teamDrivers=results;
+                        db.query('SELECT id, name FROM constructor',(error, results)=>{
+                            if(error){
+                                console.log("Error grabbing all constructors",error);
+                                res.json({success:false, msg:"Error grabbing all constructors"});
+                            }else{
+                                retObj.constructors=results;
+                                db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
+                                    if(error){
+                                        console.log("Error Grabbing Drivers",error);
+                                        res.json({success:false, msg:"Error grabbing drivers"});
+                                    }else{
+                                        retObj.drivers=results;
+                                        retObj.success=true;
+                                        res.json(retObj);
+                                    }
+                                })
+                            }
+                        })
+                    }
+                })
+            }
+        })
     })
 }
 

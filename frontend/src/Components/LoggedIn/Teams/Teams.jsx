@@ -23,10 +23,6 @@ class Teams extends Component{
             console.log('caught error:',error);
         });
     }
-    constructor(props){
-        super(props);
-
-    }
 
     render(){
         console.log(this.state);

@@ -9,7 +9,7 @@ class Header extends Component{
         let f1creds = localStorage.getItem('f1creds');
         let decoded = {name:''};
         if(f1creds){
-            decoded = decoded = jwt(f1creds);
+            decoded = jwt(f1creds);
         }else{
             window.location.href="/";
         }
