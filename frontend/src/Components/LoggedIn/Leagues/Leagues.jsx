@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import Header from '../Header/Header';
 import axios from 'axios';
 import './Leagues.css';
+import * as myurl from '../../url';
 
 class Leagues extends Component{
 
@@ -14,7 +15,7 @@ class Leagues extends Component{
     }
 
     componentDidMount(){
-        axios.get('http://localhost:3000/api/leagues',{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.get(`${myurl}/api/leagues`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('got results!',results);
             this.setState({leagues: results.data});
@@ -47,7 +48,7 @@ class Leagues extends Component{
         e.preventDefault();
         console.log("it's league creatin time!");
         console.log(this.refs);
-        axios.post("http://localhost:3000/api/leagues",{name:this.refs.leagueName.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.post(`${myurl}/api/leagues`,{name:this.refs.leagueName.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('Created League?',results);
             window.location.href=`/teams/${results.data.leagueId}`
@@ -60,7 +61,7 @@ class Leagues extends Component{
     joinLeague(e){
         e.preventDefault();
         console.log("it's league joinin time!");
-        axios.post("http://localhost:3000/api/league/join",{leagueId:this.refs.leagueId.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.post(`${myurl}/api/league/join`,{leagueId:this.refs.leagueId.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('response:',results);
             if(results.data.success){

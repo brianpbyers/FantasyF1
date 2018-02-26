@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import './AuthForm.css';
+import * as myurl from '../url';
 
 class AuthForm extends Component{
     
@@ -24,7 +25,7 @@ class AuthForm extends Component{
             name: this.refs.name?this.refs.name.value:''
         },()=>{
             console.log('set state!');
-            let url = this.state.newUser ? 'http://localhost:3000/api/signup' : 'http://localhost:3000/api/login';
+            let url = this.state.newUser ? `${myurl}/api/signup` : `${myurl}/api/login`;
             console.log('posting to this url:',url);
             axios.post(url, this.state)
             .then((response)=>{

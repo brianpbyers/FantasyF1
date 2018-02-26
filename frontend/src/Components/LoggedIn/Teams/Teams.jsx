@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import Header from '../Header/Header';
 import axios from 'axios';
 import './Teams.css';
+import * as myurl from '../../url';
 
 class Teams extends Component{
 
@@ -14,7 +15,7 @@ class Teams extends Component{
     }
 
     componentDidMount(){
-        axios.get(`http://localhost:3000/api/teams/${this.props.match.params.leagueId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.get(`${myurl}/api/teams/${this.props.match.params.leagueId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('got results!',results);
             this.setState({teams: results.data.results});

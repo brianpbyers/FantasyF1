@@ -4,6 +4,7 @@ import axios from 'axios';
 import './Team.css';
 import Selector from '../Selector/Selector';
 import * as jwt from 'jwt-decode';
+import * as myurl from '../../url';
 
 class Team extends Component{
 
@@ -19,7 +20,7 @@ class Team extends Component{
     }
 
     componentDidMount(){
-        axios.get(`http://localhost:3000/api/team/${this.props.match.params.teamId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+        axios.get(`${myurl}/api/team/${this.props.match.params.teamId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('got results!',results);
             this.setState(results.data);
@@ -86,7 +87,7 @@ class Team extends Component{
             console.log(subObj);
             if(Object.values(subObj).length === new Set(Object.values(subObj)).size){
                 console.log('TRUE!');
-                axios.post(`http://localhost:3000/api/team/${this.props.match.params.teamId}`,subObj,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
+                axios.post(`${myurl}/api/team/${this.props.match.params.teamId}`,subObj,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
                 .then((results)=>{
                     console.log("WOOOOO!",results);
                 })
