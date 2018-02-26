@@ -23,6 +23,42 @@ let getLeagues = (req, res)=>{
     });
 }
 
+let setUpUser = (user, leagueId,req,res)=>{
+    db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${leagueId})`,(error, results)=>{
+        if(error){
+            console.log('Error inserting new user_league pair:',error);
+            res.json({success:false, msg:"Error creating new user_league pair"});
+        }else{
+            console.log('successfully created new user_league pair!:',results);
+            db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${leagueId},0)`,(error, results)=>{
+                if(error){
+                    console.log('there has been an error creating your team:', error);
+                    res.json({success:false, msg:"error creating team"});
+                }else{
+                    console.log('Created a team!', results);
+                    let teamId=results.insertId;
+                    db.query(`INSERT INTO team_driver (team_id, driver_id, position) VALUES (${teamId},1,1),(${teamId},20,2),(${teamId},822,3),(${teamId},8,4),(${teamId},817,5),(${teamId},830,6),(${teamId},815,7),(${teamId},839,8),(${teamId},832,9),(${teamId},825,10);`,(error,results)=>{
+                        if(error){
+                            console.log('there has been an error setting default drivers',error);
+                            res.json({success:false, msg:"error defaulting drivers"});
+                        }else{
+                            console.log("Successfully defaulted drivers!");
+                            db.query(`INSERT INTO team_constructor (team_id, constructor_id, position) VALUES (${teamId},131,1),(${teamId},6,2),(${teamId},9,3), (${teamId},10,4), (${teamId},3,5);`,(error,results)=>{
+                                if(error){
+                                    console.log("error defaulting constructors",error);
+                                    res.json({success:false, msg:"error defaulting constructors"});
+                                }else{
+                                    console.log("Successfully defaulted Constructors!");
+                                    res.json({success:true, leagueId:leagueId});
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
 let postLeague = (req, res)=>{
     let user = auth.decodeToken(req);
     db.query(`INSERT INTO league(name) VALUES("${req.body.name}")`,(error,results)=>{
@@ -32,23 +68,7 @@ let postLeague = (req, res)=>{
         }else{
             console.log('league insert results:',results);
             let leagueId = results.insertId
-            db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${leagueId})`,(error, results)=>{
-                if(error){
-                    console.log('Error inserting new user_league pair:',error);
-                    res.json({success:false, msg:"Error creating new user_league pair"});
-                }else{
-                    console.log('successfully created new user_league pair!:',results);
-                    db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${leagueId},0)`,(error, results)=>{
-                        if(error){
-                            console.log('there has been an error creating your team:', error);
-                            res.json({success:false, msg:"error creating team"});
-                        }else{
-                            console.log('Created a team!', results);
-                            res.json(results);
-                        }
-                    })
-                }
-            })
+            setUpUser(user,leagueId, req, res);
         }
     });
 }
@@ -83,23 +103,7 @@ let joinLeague = (req, res)=>{
                     res.json({success:false, msg:"User already in league!"});
                 }else{
                     console.log('putting user into league',results[0]);
-                    db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${req.body.leagueId});`,(error, results)=>{
-                        if(error){
-                            console.log('there has been an error putting user into league:',error);
-                            res.json({success:false, msg:"there has been an error putting user into league"});
-                        }else{
-                            console.log('successfully inserted user into league');
-                            db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${req.body.leagueId},0)`,(error, results)=>{
-                                if(error){
-                                    console.log('there has been an error creating your team:', error);
-                                    res.json({success:false, msg:"There has been an error creating your team"});
-                                }else{
-                                    console.log('Created a team!', results);
-                                    res.json({success:true, msg:"Team Created!"});
-                                }
-                            })
-                        }
-                    })
+                    setUpUser(user,req.body.leagueId, req, res);
                 }
             })
         }
@@ -113,7 +117,7 @@ let getTeams = (req, res)=>{
             res.json({success:false, msg:"Error retrieving teams. Please refresh the page"});
         }else{
             console.log('results of teamSearch:',results);
-            res.json(results);
+            res.json({success: true, results:results});
         }
     })
 }
@@ -121,6 +125,47 @@ let getTeams = (req, res)=>{
 //update the team 0 to requested specifications.  Want an array of drivers and an array of constructors in req.body
 let postTeam = (req, res)=>{
     res.json('WOOO!  YOU GOT TO POSTLEAGUETEAMS!');
+}
+
+let getTeam = (req, res)=>{
+    let user = auth.decodeToken(req);
+    let teamId = req.params.teamId;
+    let retObj={};
+    db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
+        if(error){
+            console.log("Error getting constructors for this team",error);
+            res.json({success:false, msg:"Error getting constructors for this team"});
+        }else{
+            console.log(results);
+            retObj.teamConstructors=results;
+            db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
+                if(error){
+                    console.log("Error getting drivers for this team",error);
+                    res.json({success:false, msg:"Error getting drivers for this team"});
+                }else{
+                    retObj.teamDrivers=results;
+                    db.query('SELECT id, name FROM constructor',(error, results)=>{
+                        if(error){
+                            console.log("Error grabbing all constructors",error);
+                            res.json({success:false, msg:"Error grabbing all constructors"});
+                        }else{
+                            retObj.constructors=results;
+                            db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
+                                if(error){
+                                    console.log("Error Grabbing Drivers",error);
+                                    res.json({success:false, msg:"Error grabbing drivers"});
+                                }else{
+                                    retObj.drivers=results;
+                                    retObj.success=true;
+                                    res.json(retObj);
+                                }
+                            })
+                        }
+                    })
+                }
+            })
+        }
+    })
 }
 
 
@@ -131,3 +176,4 @@ module.exports.postLeague = postLeague;
 module.exports.joinLeague = joinLeague;
 module.exports.getTeams = getTeams;
 module.exports.postTeam = postTeam;
+module.exports.getTeam = getTeam;

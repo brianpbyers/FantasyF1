@@ -50,7 +50,7 @@ class Leagues extends Component{
         axios.post("http://localhost:3000/api/leagues",{name:this.refs.leagueName.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('Created League?',results);
-            window.location.href=`/teams/${results.data.insertId}`
+            window.location.href=`/teams/${results.data.leagueId}`
         })
         .catch((err)=>{
             console.log('error creating league:',err);

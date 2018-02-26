@@ -17,7 +17,7 @@ class Teams extends Component{
         axios.get(`http://localhost:3000/api/teams/${this.props.match.params.leagueId}`,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('got results!',results);
-            this.setState({teams: results.data});
+            this.setState({teams: results.data.results});
         })
         .catch((error)=>{
             console.log('caught error:',error);
@@ -35,7 +35,7 @@ class Teams extends Component{
             console.log('creating team list!', this.state.teams);
             teamList = this.state.teams.map((team)=>
                 <li key={team.id}>
-                    <Link to={`/teams/${team.id}`}>{team.name}</Link>
+                    <Link to={`/team/${team.id}`}>{team.name}</Link>
                 </li>
             );
         }
@@ -43,9 +43,8 @@ class Teams extends Component{
             <div>
                 <Header />
                 <p className="App-intro">
-                    Should list all the teams here!
                 </p>
-                <ul>My Teams{teamList}</ul>
+                <ul>League Standings{teamList}</ul>
             </div>
         )
     }

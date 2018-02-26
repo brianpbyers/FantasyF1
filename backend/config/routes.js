@@ -22,7 +22,11 @@ router.route('/api/league/join')
     .post(authController.hasGoodToken, mainController.joinLeague);
 
 router.route('/api/teams/:leagueId')
-    .get(authController.hasGoodToken, mainController.getTeams)
+    .get(authController.hasGoodToken, mainController.getTeams);
+
+    //will need middleware for game.  If your team no problem.  If other's team better be after race starts if team 0
+router.route('/api/team/:teamId')
+    .get(authController.hasGoodToken, mainController.getTeam)
     .post(authController.hasGoodToken, mainController.postTeam);
 
 
