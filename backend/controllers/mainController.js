@@ -129,7 +129,51 @@ let getTeams = (req, res)=>{
 //     WHEN position = 4 THEN 5
 //     WHEN position = 5 THEN 6 END) WHERE team_id = 5;
 let postTeam = (req, res)=>{
-    res.json('WOOO!  YOU GOT TO POSTLEAGUETEAMS!');
+    let teamId = req.params.teamId;
+    let user = auth.decodeToken(req);
+    canUserEdit(user.id, teamId,(canEdit)=>{
+        if(canEdit){
+            console.log('you can edit!',req.body);
+            db.query(`UPDATE team_constructor SET constructor_id=(CASE 
+                WHEN position = 1 THEN ${req.body.c1}
+                WHEN position = 2 THEN ${req.body.c2}
+                WHEN position = 3 THEN ${req.body.c3}
+                WHEN position = 4 THEN ${req.body.c4}
+                WHEN position = 5 THEN ${req.body.c5}
+                END)
+                WHERE team_id = ${teamId};`,(error,results)=>{
+                    if(error){
+                        console.log('error updating constructors:',error);
+                        res.json({success:false, msg:'we ran into an error updating your team'});
+                    }else{
+                        console.log('SUCCESS UPDATING CONSTRUCTORS!',results);
+                        db.query(`UPDATE team_driver SET driver_id=(CASE
+                            WHEN position = 1 THEN ${req.body.d1}
+                            WHEN position = 2 THEN ${req.body.d2}
+                            WHEN position = 3 THEN ${req.body.d3}
+                            WHEN position = 4 THEN ${req.body.d4}
+                            WHEN position = 5 THEN ${req.body.d5}
+                            WHEN position = 6 THEN ${req.body.d6}
+                            WHEN position = 7 THEN ${req.body.d7}
+                            WHEN position = 8 THEN ${req.body.d8}
+                            WHEN position = 9 THEN ${req.body.d9}
+                            WHEN position = 10 THEN ${req.body.d10}
+                        END)
+                        WHERE team_id = ${teamId};`,(error, results)=>{
+                            if(error){
+                                console.log('error updating drivers:',error);
+                                res.json({success:false, msg:'we ran into an error updating your team'});
+                            }else{
+                                console.log("SUCCESS UPDATING DRIVERS!",results);
+                                res.json({success:true, msg:"team updated!"});
+                            }   
+                        })
+                    }
+                })
+        }else{
+            res.json({success:false, msg:"Sorry, you are currently unable to edit this team"})
+        }
+    })
 }
 
 let canUserEdit = (userId, teamId, callback)=>{
