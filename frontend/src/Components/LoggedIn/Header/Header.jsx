@@ -16,7 +16,7 @@ class Header extends Component{
         let logout = ()=>{
             console.log('hit logout! history:', this.props.history);
             localStorage.removeItem('f1creds');
-            this.props.history.replace('/');
+            this.props.history.push('/');
         }
         return(
             <div>
