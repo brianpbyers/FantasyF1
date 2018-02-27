@@ -2,7 +2,7 @@ const mysql = require('mysql');
 require('dotenv').config();
 
 console.log('hit index.js!');
-console.log(process.env.DB_HOST);
+console.log(process.env.CLEARDB_DATABASE_URL);
 let sqlLogin = process.env.CLEARDB_DATABASE_URL || {
     host:process.env.DB_HOST,
     user:process.env.DB_USER,
