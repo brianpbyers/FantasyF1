@@ -31,7 +31,7 @@ app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'build')));
 app.use('/', router);
 
 app.listen(process.env.PORT || 3030, console.log('Potato server is running on port:', process.env.PORT ||3030));
