@@ -85,14 +85,14 @@ class Leagues extends Component{
             console.log('creating league list!', this.state.leagues);
             leagueList = this.state.leagues.map((league)=>
                 <li key={league.id}>
-                    <Link to={`/teams/${league.id}`}>{league.name}</Link>
+                    <Link to={`/teams/${league.id}/${league.name}`}>{league.name}</Link>
                 </li>
             );
         }
         return(
             <div>
-                <Header />
-                <ul>My Leagues{leagueList}</ul>
+                <Header title="My Leagues" />
+                <ul>{leagueList}</ul>
                 <button onClick={ this.toggleCreate.bind(this) }>Create a new league</button>
                 {this.state.createLeague && <div>
                         <form onSubmit = {this.createLeague.bind(this)}>

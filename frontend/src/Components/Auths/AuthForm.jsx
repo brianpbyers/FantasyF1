@@ -50,8 +50,11 @@ class AuthForm extends Component{
     render(){
         return(
            <div>
-                {!this.state.newUser && <h2>Please log in</h2>}
-                {this.state.newUser && <h2>Please sign up</h2>}
+                <header className="App-header">
+                    {!this.state.newUser && <h1>Please log in</h1>}
+                    {this.state.newUser && <h1>Please sign up</h1>}
+                </header>
+
                 <button onClick={this.toggleNewUser.bind(this)}>{this.state.newUser?"Already a User?":"New to FantasyF1?"}</button>
                <form onSubmit = {this.authenticate}>
                     <div className="email">

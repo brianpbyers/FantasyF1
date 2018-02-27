@@ -101,12 +101,9 @@ class Team extends Component{
 
         return(
             <div>
-                <Header />
-                <p className="App-intro">
-                    Team Info
-                </p>
-                <ol>Drivers{driverList}</ol>
-                <ol>Constructors{constructorList}</ol>
+                <Header title="Team Order"/>
+                <ol><h4>Drivers</h4>{driverList}</ol>
+                <ol><h4>Constructors</h4>{constructorList}</ol>
                 {this.state.canEdit && <button onClick={submitTeam}>Save Changes </button>}
             </div>
         )

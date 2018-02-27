@@ -38,7 +38,7 @@ class Teams extends Component{
         }
         return(
             <div>
-                <Header />
+                <Header title={this.props.match.params.leagueName}/>
                 <p className="App-intro">
                 </p>
                 <ul>League Standings{teamList}</ul>

@@ -21,9 +21,9 @@ class Header extends Component{
         return(
             <div>
                 <header className="App-header">
-                    <h1>This is the header {decoded.name}</h1>
+                    <h1>{this.props.title}</h1>
+                    <button onClick={logout}>Log out of {decoded.name}</button>
                 </header>
-                <button onClick={logout}>Log out of {decoded.name}</button>
             </div>
         )
     }
