@@ -1,0 +1,15 @@
+#teamDiv{
+    height: 100vh;
+    background-color: #444444;
+}
+#teamDiv ol{
+    color:lightgrey;
+    max-width: 30vw;
+    padding-bottom: 3vh;
+}
+#teamDiv li{
+    margin: 0 auto;
+}
+#teamDiv h4{
+    color:darkred;
+}

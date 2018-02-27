@@ -90,7 +90,7 @@ class Leagues extends Component{
             );
         }
         return(
-            <div>
+            <div id="leagueDiv">
                 <Header title="My Leagues" />
                 <ul>{leagueList}</ul>
                 <button onClick={ this.toggleCreate.bind(this) }>Create a new league</button>

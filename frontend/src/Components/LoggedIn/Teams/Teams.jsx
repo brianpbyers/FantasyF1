@@ -32,12 +32,13 @@ class Teams extends Component{
             console.log('creating team list!', this.state.teams);
             teamList = this.state.teams.map((team)=>
                 <li key={team.id}>
-                    <Link to={`/team/${team.id}`}>{team.name}</Link>
+                    <Link to={`/team/${team.id}`}>{team.name}:</Link>
+                    <span id="points"> {team.points} points</span>
                 </li>
             );
         }
         return(
-            <div>
+            <div id="teamsDiv">
                 <Header title={this.props.match.params.leagueName} leagueId={this.props.match.params.leagueId}/>
                 <p className="App-intro">
                 </p>
