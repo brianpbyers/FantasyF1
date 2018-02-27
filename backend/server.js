@@ -32,6 +32,7 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 
 app.use(express.static(path.join(__dirname, 'build')));
-app.use('/', router);
+app.use('/api', router);
+app.get('*',(req,res)=>{res.sendFile(path.resolve('build','index.html'))});
 
 app.listen(process.env.PORT || 3030, console.log('Potato server is running on port:', process.env.PORT ||3030));
