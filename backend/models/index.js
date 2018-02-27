@@ -13,15 +13,6 @@ let sqlLogin = process.env.CLEARDB_DATABASE_URL || {
 
 let connection = mysql.createConnection(sqlLogin);
 
-connection.connect((err)=>{
-    if(err){
-        console.log("There was an error!",err);
-        return;
-    }
-    console.log('connected to MysqlServer!');
-});
-
-
 module.exports.db = connection;
 
 // tables used:

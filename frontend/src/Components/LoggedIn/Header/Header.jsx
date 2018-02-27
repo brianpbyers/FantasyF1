@@ -20,7 +20,7 @@ class Header extends Component{
         }
         let goToLeagues = ()=>{
             console.log("going to leagues");
-            window.location.href="/leagues";
+            window.location.href="/";
         }
         return(
             <div>
