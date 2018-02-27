@@ -1,6 +1,6 @@
 const request = require('request');
 
-const db = require('../models').db;
+const db = require('../models');
 
 const auth = require('../controllers/authController');
 
@@ -11,7 +11,8 @@ let getTest = (req,res)=>{
 let getLeagues = (req, res)=>{
     let user = auth.decodeToken(req);
     console.log('userid:',user.id);
-    db.query(
+    db.connect;
+    db.db.query(
         `SELECT * FROM (league JOIN user_league ON league.id = user_league.league_id AND user_league.user_id=${user.id});`,(error, results)=>{
         if(error){
             console.log('Error grabbing leagues!')
@@ -19,37 +20,41 @@ let getLeagues = (req, res)=>{
         }else{
             console.log('results of leaguesearch:',results);
             res.json(results);
+            console.log("all done in getLeagues, ending connection");
+            db.end;
         }
     });
 }
 
 let setUpUser = (user, leagueId, leagueName, req,res)=>{
-    db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${leagueId})`,(error, results)=>{
+    db.db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${leagueId})`,(error, results)=>{
         if(error){
             console.log('Error inserting new user_league pair:',error);
             res.json({success:false, msg:"Error creating new user_league pair"});
         }else{
             console.log('successfully created new user_league pair!:',results);
-            db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${leagueId},0)`,(error, results)=>{
+            db.db.query(`INSERT INTO team(name, user_id, league_id, race_id) VALUES("${user.name}",${user.id},${leagueId},0)`,(error, results)=>{
                 if(error){
                     console.log('there has been an error creating your team:', error);
                     res.json({success:false, msg:"error creating team"});
                 }else{
                     console.log('Created a team!', results);
                     let teamId=results.insertId;
-                    db.query(`INSERT INTO team_driver (team_id, driver_id, position) VALUES (${teamId},1,1),(${teamId},20,2),(${teamId},822,3),(${teamId},8,4),(${teamId},817,5),(${teamId},830,6),(${teamId},815,7),(${teamId},839,8),(${teamId},832,9),(${teamId},825,10);`,(error,results)=>{
+                    db.db.query(`INSERT INTO team_driver (team_id, driver_id, position) VALUES (${teamId},1,1),(${teamId},20,2),(${teamId},822,3),(${teamId},8,4),(${teamId},817,5),(${teamId},830,6),(${teamId},815,7),(${teamId},839,8),(${teamId},832,9),(${teamId},825,10);`,(error,results)=>{
                         if(error){
                             console.log('there has been an error setting default drivers',error);
                             res.json({success:false, msg:"error defaulting drivers"});
                         }else{
                             console.log("Successfully defaulted drivers!");
-                            db.query(`INSERT INTO team_constructor (team_id, constructor_id, position) VALUES (${teamId},131,1),(${teamId},6,2),(${teamId},9,3), (${teamId},10,4), (${teamId},3,5);`,(error,results)=>{
+                            db.db.query(`INSERT INTO team_constructor (team_id, constructor_id, position) VALUES (${teamId},131,1),(${teamId},6,2),(${teamId},9,3), (${teamId},10,4), (${teamId},3,5);`,(error,results)=>{
                                 if(error){
                                     console.log("error defaulting constructors",error);
                                     res.json({success:false, msg:"error defaulting constructors"});
                                 }else{
                                     console.log("Successfully defaulted Constructors!");
                                     res.json({success:true, leagueId:leagueId, leagueName: leagueName});
+                                    console.log("All done, ending connection");
+                                    db.end;
                                 }
                             })
                         }
@@ -61,7 +66,8 @@ let setUpUser = (user, leagueId, leagueName, req,res)=>{
 }
 let postLeague = (req, res)=>{
     let user = auth.decodeToken(req);
-    db.query(`INSERT INTO league(name) VALUES("${req.body.name}")`,(error,results)=>{
+    db.connect;
+    db.db.query(`INSERT INTO league(name) VALUES("${req.body.name}")`,(error,results)=>{
         if(error){
             console.log('Error inserting new league',error);
             res.json({success:false, msg:"Error inserting new league"});
@@ -85,7 +91,8 @@ let postLeague = (req, res)=>{
 let joinLeague = (req, res)=>{
     let user = auth.decodeToken(req);
     console.log('in Join league');
-    db.query(`SELECT * FROM league WHERE id=${req.body.leagueId}`,(error,results)=>{
+    db.connect;
+    db.db.query(`SELECT * FROM league WHERE id=${req.body.leagueId}`,(error,results)=>{
         if(error){
             console.log("error checking if league exists!",error);
             res.json({success:false, msg:"error checking for league existence"});
@@ -94,7 +101,7 @@ let joinLeague = (req, res)=>{
             res.json({success:false, msg:"Couldn't find league"});
         }else{
             let leagueName = results[0].name;
-            db.query(`SELECT * FROM user_league WHERE user_id=${user.id} AND league_id=${req.body.leagueId}`,(error, results)=>{
+            db.db.query(`SELECT * FROM user_league WHERE user_id=${user.id} AND league_id=${req.body.leagueId}`,(error, results)=>{
                 if(error){
                     console.log("error checking if user already exists in league:",error);
                     res.json({});
@@ -112,13 +119,15 @@ let joinLeague = (req, res)=>{
 }
 
 let getTeams = (req, res)=>{
-    db.query(`SELECT * FROM team WHERE league_id=${req.params.leagueId}`, (error, results)=>{
+    db.connect;
+    db.db.query(`SELECT * FROM team WHERE league_id=${req.params.leagueId}`, (error, results)=>{
         if(error){
             console.log('Error grabbing teams');
             res.json({success:false, msg:"Error retrieving teams. Please refresh the page"});
         }else{
             console.log('results of teamSearch:',results);
             res.json({success: true, results:results});
+            db.end;
         }
     })
 }
@@ -132,10 +141,11 @@ let getTeams = (req, res)=>{
 let postTeam = (req, res)=>{
     let teamId = req.params.teamId;
     let user = auth.decodeToken(req);
+    db.connect;
     canUserEdit(user.id, teamId,(canEdit)=>{
         if(canEdit){
             console.log('you can edit!',req.body);
-            db.query(`UPDATE team_constructor SET constructor_id=(CASE 
+            db.db.query(`UPDATE team_constructor SET constructor_id=(CASE 
                 WHEN position = 1 THEN ${req.body.c1}
                 WHEN position = 2 THEN ${req.body.c2}
                 WHEN position = 3 THEN ${req.body.c3}
@@ -148,7 +158,7 @@ let postTeam = (req, res)=>{
                         res.json({success:false, msg:'we ran into an error updating your team'});
                     }else{
                         console.log('SUCCESS UPDATING CONSTRUCTORS!',results);
-                        db.query(`UPDATE team_driver SET driver_id=(CASE
+                        db.db.query(`UPDATE team_driver SET driver_id=(CASE
                             WHEN position = 1 THEN ${req.body.d1}
                             WHEN position = 2 THEN ${req.body.d2}
                             WHEN position = 3 THEN ${req.body.d3}
@@ -167,6 +177,8 @@ let postTeam = (req, res)=>{
                             }else{
                                 console.log("SUCCESS UPDATING DRIVERS!",results);
                                 res.json({success:true, msg:"team updated!"});
+                                console.log("all done updating, ending connection now");
+                                db.end;
                             }   
                         })
                     }
@@ -178,7 +190,7 @@ let postTeam = (req, res)=>{
 }
 
 let canUserEdit = (userId, teamId, callback)=>{
-    db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
+    db.db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
         if(error){
             console.log("there has been an error finding user/team combo",error);
             callback(false);
@@ -197,30 +209,31 @@ let getTeam = (req, res)=>{
     let user = auth.decodeToken(req);
     let teamId = req.params.teamId;
     let retObj={};
+    db.connect;
     canUserEdit(user.id, teamId,(canEdit)=>{
         retObj.canEdit=canEdit;
-        db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
+        db.db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
             if(error){
                 console.log("Error getting constructors for this team",error);
                 res.json({success:false, msg:"Error getting constructors for this team"});
             }else{
                 console.log('got constructors',results);
                 retObj.teamConstructors=results;
-                db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
+                db.db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
                     if(error){
                         console.log("Error getting drivers for this team",error);
                         res.json({success:false, msg:"Error getting drivers for this team"});
                     }else{
                         console.log('got this teams drivers');
                         retObj.teamDrivers=results;
-                        db.query('SELECT id, name FROM constructor',(error, results)=>{
+                        db.db.query('SELECT id, name FROM constructor',(error, results)=>{
                             if(error){
                                 console.log("Error grabbing all constructors",error);
                                 res.json({success:false, msg:"Error grabbing all constructors"});
                             }else{
                                 console.log('got constructors');
                                 retObj.constructors=results;
-                                db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
+                                db.db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
                                     if(error){
                                         console.log("Error Grabbing Drivers",error);
                                         res.json({success:false, msg:"Error grabbing drivers"});
@@ -229,6 +242,8 @@ let getTeam = (req, res)=>{
                                         retObj.drivers=results;
                                         retObj.success=true;
                                         res.json(retObj);
+                                        console.log("All done getting info, ending connection");
+                                        db.end;
                                     }
                                 })
                             }

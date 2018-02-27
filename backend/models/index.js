@@ -13,10 +13,10 @@ let sqlLogin = process.env.CLEARDB_DATABASE_URL || {
 
 let connection = mysql.createConnection(sqlLogin);
 
-connection.connect();
 
-
+module.exports.connect = connection.connect();
 module.exports.db = connection;
+module.exports.end = connection.end;
 
 // tables used:
 // constructor: all constructors competing for the F1 Championship 
