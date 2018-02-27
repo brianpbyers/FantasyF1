@@ -203,25 +203,28 @@ let getTeam = (req, res)=>{
                 console.log("Error getting constructors for this team",error);
                 res.json({success:false, msg:"Error getting constructors for this team"});
             }else{
-                console.log(results);
+                console.log('got constructors',results);
                 retObj.teamConstructors=results;
                 db.query(`SELECT team_driver.position, driver.id, driver.number, driver.code, driver.surname FROM team_driver JOIN driver ON team_driver.driver_id = driver.id WHERE team_driver.team_id=${teamId}`,(error, results)=>{
                     if(error){
                         console.log("Error getting drivers for this team",error);
                         res.json({success:false, msg:"Error getting drivers for this team"});
                     }else{
+                        console.log('got this teams drivers');
                         retObj.teamDrivers=results;
                         db.query('SELECT id, name FROM constructor',(error, results)=>{
                             if(error){
                                 console.log("Error grabbing all constructors",error);
                                 res.json({success:false, msg:"Error grabbing all constructors"});
                             }else{
+                                console.log('got constructors');
                                 retObj.constructors=results;
                                 db.query('SELECT id, number, code, surname FROM driver',(error, results)=>{
                                     if(error){
                                         console.log("Error Grabbing Drivers",error);
                                         res.json({success:false, msg:"Error grabbing drivers"});
                                     }else{
+                                        console.log('got all drivers and constructors');
                                         retObj.drivers=results;
                                         retObj.success=true;
                                         res.json(retObj);
