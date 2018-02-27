@@ -13,7 +13,7 @@ class Team extends Component{
         this.setState({canEdit:false, user:user});
         if(!localStorage.getItem("f1creds")){
             console.log("user session not detected.  Redirecting to home page");
-            window.location.href="/";
+            this.props.history.replace('/');
         }else{
             this.setState({user:jwt(localStorage.getItem('f1creds'))});
         }

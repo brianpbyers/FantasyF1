@@ -32,7 +32,7 @@ class AuthForm extends Component{
                 console.log("Successful login?:",response.data);
                 if(response.data.success){
                     localStorage.setItem("f1creds", response.data.token);
-                    window.location.href="/leagues";
+                    this.props.history.replace("/leagues");
                 }else{
                     alert(response.data.msg);
                 }

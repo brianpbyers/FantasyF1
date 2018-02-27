@@ -10,7 +10,7 @@ class Teams extends Component{
     componentWillMount(){
         if(!localStorage.getItem("f1creds")){
             console.log("user session not detected.  Redirecting to home page");
-            window.location.href="/";
+            this.props.history.replace('/');
         }
     }
 

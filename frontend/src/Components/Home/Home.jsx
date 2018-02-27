@@ -7,7 +7,7 @@ class Home extends Component{
     componentWillMount(){
         if(localStorage.getItem("f1creds")){
             console.log("user session detected.  Redirecting to leagues page");
-            window.location.href="/leagues";
+            this.props.history.replace("/leagues");
         }
     }
     render(){

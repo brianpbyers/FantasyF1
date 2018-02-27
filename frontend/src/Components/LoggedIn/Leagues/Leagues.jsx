@@ -10,7 +10,7 @@ class Leagues extends Component{
     componentWillMount(){
         if(!localStorage.getItem("f1creds")){
             console.log("user session not detected.  Redirecting to home page");
-            window.location.href="/";
+            this.props.history.replace('/');
         }
     }
 
@@ -51,7 +51,7 @@ class Leagues extends Component{
         axios.post(`${myurl}/api/leagues`,{name:this.refs.leagueName.value},{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
         .then((results)=>{
             console.log('Created League?',results);
-            window.location.href=`/teams/${results.data.leagueId}`
+            this.props.history.push(`/teams/${results.data.leagueId}`);
         })
         .catch((err)=>{
             console.log('error creating league:',err);
@@ -66,7 +66,7 @@ class Leagues extends Component{
             console.log('response:',results);
             if(results.data.success){
                 console.log('successfully joined league!');
-                window.location.href=`/teams/${this.refs.leagueId.value}`;
+                this.props.history.push(`/teams/${this.refs.leagueId.value}`);
             }else{
                 console.log('league join was unsuccessful',results.data.msg);
                 this.refs.leagueId.value='';
