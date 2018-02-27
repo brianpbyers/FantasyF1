@@ -8,24 +8,24 @@ let authController = require('../controllers/authController');
 router.route('/test')
     .get(mainController.getTest);   
 
-router.route('/signup')
+router.route('/api/signup')
     .post(authController.signup);
 
-router.route('/login')
+router.route('/api/login')
     .post(authController.login);
 
-router.route('/leagues')
+router.route('/api/leagues')
     .get(authController.hasGoodToken, mainController.getLeagues)
     .post(authController.hasGoodToken, mainController.postLeague);
 
-router.route('/league/join')
+router.route('/api/league/join')
     .post(authController.hasGoodToken, mainController.joinLeague);
 
-router.route('/teams/:leagueId')
+router.route('/api/teams/:leagueId')
     .get(authController.hasGoodToken, mainController.getTeams);
 
     //will need middleware for game.  If your team no problem.  If other's team better be after race starts if team 0
-router.route('/team/:teamId')
+router.route('/api/team/:teamId')
     .get(authController.hasGoodToken, mainController.getTeam)
     .post(authController.hasGoodToken, mainController.postTeam);
 
