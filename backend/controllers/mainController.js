@@ -23,7 +23,7 @@ let getLeagues = (req, res)=>{
     });
 }
 
-let setUpUser = (user, leagueId,req,res)=>{
+let setUpUser = (user, leagueId, leagueName, req,res)=>{
     db.query(`INSERT INTO user_league(user_id, league_id) VALUES(${user.id}, ${leagueId})`,(error, results)=>{
         if(error){
             console.log('Error inserting new user_league pair:',error);
@@ -49,7 +49,7 @@ let setUpUser = (user, leagueId,req,res)=>{
                                     res.json({success:false, msg:"error defaulting constructors"});
                                 }else{
                                     console.log("Successfully defaulted Constructors!");
-                                    res.json({success:true, leagueId:leagueId});
+                                    res.json({success:true, leagueId:leagueId, leagueName: leagueName});
                                 }
                             })
                         }
@@ -68,7 +68,7 @@ let postLeague = (req, res)=>{
         }else{
             console.log('league insert results:',results);
             let leagueId = results.insertId
-            setUpUser(user,leagueId, req, res);
+            setUpUser(user,leagueId, req.body.name, req, res);
         }
     });
 }
@@ -93,6 +93,7 @@ let joinLeague = (req, res)=>{
             console.log("League doesn't exist!");
             res.json({success:false, msg:"Couldn't find league"});
         }else{
+            let leagueName = results[0].name;
             db.query(`SELECT * FROM user_league WHERE user_id=${user.id} AND league_id=${req.body.leagueId}`,(error, results)=>{
                 if(error){
                     console.log("error checking if user already exists in league:",error);
@@ -103,7 +104,7 @@ let joinLeague = (req, res)=>{
                     res.json({success:false, msg:"User already in league!"});
                 }else{
                     console.log('putting user into league',results[0]);
-                    setUpUser(user,req.body.leagueId, req, res);
+                    setUpUser(user,req.body.leagueId, leagueName, req, res);
                 }
             })
         }

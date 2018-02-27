@@ -90,6 +90,7 @@ class Team extends Component{
                 axios.post(`${myurl}/api/team/${this.props.match.params.teamId}`,subObj,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
                 .then((results)=>{
                     console.log("WOOOOO!",results);
+                    alert("Did you save the team succesfully?"+results.data.success+','+results.data.msg);
                 })
                 .catch((error)=>{
                     console.log("Awwwwww :(",error);

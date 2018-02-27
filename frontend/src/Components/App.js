@@ -18,6 +18,7 @@ class App extends Component {
               <Route exact path='/leagues' component={ Leagues }/>
               <Route exact path = '/teams/:leagueId/:leagueName' component={ Teams }/>
               <Route exact path = '/team/:teamId' component = { Team } />
+              <Route component = { Leagues } />
           </Switch>
         </BrowserRouter>
       </div>
