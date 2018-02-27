@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "cd backend && npm install",
-    "start": "node backend/server.js"
+    "start":"node backend/server.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +16,17 @@
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/brianpbyers/FantasyF1/issues"
+  },
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "dotenv": "^5.0.0",
+    "express": "^4.16.2",
+    "jwt-simple": "^0.5.1",
+    "morgan": "^1.9.0",
+    "mysql": "^2.15.0",
+    "passport": "^0.4.0",
+    "passport-jwt": "^3.0.1"
   },
   "homepage": "https://github.com/brianpbyers/FantasyF1#readme"
 }
