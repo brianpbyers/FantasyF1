@@ -11,12 +11,12 @@ class Header extends Component{
         if(f1creds){
             decoded = jwt(f1creds);
         }else{
-            this.props.history.replace('/');
+            window.location.href="/";
         }
         let logout = ()=>{
-            console.log('hit logout! history:', this.props.history);
+            console.log('hit logout!');
             localStorage.removeItem('f1creds');
-            this.props.history.push('/');
+            window.location.href="/";
         }
         return(
             <div>
