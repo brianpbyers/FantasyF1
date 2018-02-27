@@ -11,7 +11,6 @@ let getTest = (req,res)=>{
 let getLeagues = (req, res)=>{
     let user = auth.decodeToken(req);
     console.log('userid:',user.id);
-    db.connect;
     db.db.query(
         `SELECT * FROM (league JOIN user_league ON league.id = user_league.league_id AND user_league.user_id=${user.id});`,(error, results)=>{
         if(error){
@@ -21,7 +20,6 @@ let getLeagues = (req, res)=>{
             console.log('results of leaguesearch:',results);
             res.json(results);
             console.log("all done in getLeagues, ending connection");
-            db.end;
         }
     });
 }
@@ -54,7 +52,6 @@ let setUpUser = (user, leagueId, leagueName, req,res)=>{
                                     console.log("Successfully defaulted Constructors!");
                                     res.json({success:true, leagueId:leagueId, leagueName: leagueName});
                                     console.log("All done, ending connection");
-                                    db.end;
                                 }
                             })
                         }
@@ -66,7 +63,6 @@ let setUpUser = (user, leagueId, leagueName, req,res)=>{
 }
 let postLeague = (req, res)=>{
     let user = auth.decodeToken(req);
-    db.connect;
     db.db.query(`INSERT INTO league(name) VALUES("${req.body.name}")`,(error,results)=>{
         if(error){
             console.log('Error inserting new league',error);
@@ -91,7 +87,7 @@ let postLeague = (req, res)=>{
 let joinLeague = (req, res)=>{
     let user = auth.decodeToken(req);
     console.log('in Join league');
-    db.connect;
+    console.log('connected');
     db.db.query(`SELECT * FROM league WHERE id=${req.body.leagueId}`,(error,results)=>{
         if(error){
             console.log("error checking if league exists!",error);
@@ -119,15 +115,13 @@ let joinLeague = (req, res)=>{
 }
 
 let getTeams = (req, res)=>{
-    db.connect;
-    db.db.query(`SELECT * FROM team WHERE league_id=${req.params.leagueId}`, (error, results)=>{
+    db.db.query(`SELECT * FROM team WHERE league_id=${req.params.leagueId} AND race_id=0 ORDER BY points DESC`, (error, results)=>{
         if(error){
             console.log('Error grabbing teams');
             res.json({success:false, msg:"Error retrieving teams. Please refresh the page"});
         }else{
             console.log('results of teamSearch:',results);
             res.json({success: true, results:results});
-            db.end;
         }
     })
 }
@@ -141,7 +135,6 @@ let getTeams = (req, res)=>{
 let postTeam = (req, res)=>{
     let teamId = req.params.teamId;
     let user = auth.decodeToken(req);
-    db.connect;
     canUserEdit(user.id, teamId,(canEdit)=>{
         if(canEdit){
             console.log('you can edit!',req.body);
@@ -178,7 +171,6 @@ let postTeam = (req, res)=>{
                                 console.log("SUCCESS UPDATING DRIVERS!",results);
                                 res.json({success:true, msg:"team updated!"});
                                 console.log("all done updating, ending connection now");
-                                db.end;
                             }   
                         })
                     }
@@ -209,7 +201,6 @@ let getTeam = (req, res)=>{
     let user = auth.decodeToken(req);
     let teamId = req.params.teamId;
     let retObj={};
-    db.connect;
     canUserEdit(user.id, teamId,(canEdit)=>{
         retObj.canEdit=canEdit;
         db.db.query(`SELECT team_constructor.position, constructor.id, constructor.name FROM team_constructor JOIN constructor ON team_constructor.constructor_id = constructor.id WHERE team_constructor.team_id = ${teamId}`,(error, results)=>{
@@ -243,7 +234,6 @@ let getTeam = (req, res)=>{
                                         retObj.success=true;
                                         res.json(retObj);
                                         console.log("All done getting info, ending connection");
-                                        db.end;
                                     }
                                 })
                             }

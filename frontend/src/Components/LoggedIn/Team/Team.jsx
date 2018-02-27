@@ -67,6 +67,24 @@ class Team extends Component{
         let submitTeam = ()=>{
             console.log('time to submit team!');
             console.log('this.key?', this.props.match.params.teamId);
+            let dObj={                
+                d1:Number(this.refs.d1.state.value),
+                d2:Number(this.refs.d2.state.value),
+                d3:Number(this.refs.d3.state.value),
+                d4:Number(this.refs.d4.state.value),
+                d5:Number(this.refs.d5.state.value),
+                d6:Number(this.refs.d6.state.value),
+                d7:Number(this.refs.d7.state.value),
+                d8:Number(this.refs.d8.state.value),
+                d9:Number(this.refs.d9.state.value),
+                d10:Number(this.refs.d10.state.value)};
+            let cObj={
+                c1:Number(this.refs.c1.state.value),
+                c2:Number(this.refs.c2.state.value),
+                c3:Number(this.refs.c3.state.value),
+                c4:Number(this.refs.c4.state.value),
+                c5:Number(this.refs.c5.state.value)
+            };
             let subObj = {
                 d1:Number(this.refs.d1.state.value),
                 d2:Number(this.refs.d2.state.value),
@@ -85,7 +103,7 @@ class Team extends Component{
                 c5:Number(this.refs.c5.state.value)
             }
             console.log(subObj);
-            if(Object.values(subObj).length === new Set(Object.values(subObj)).size){
+            if((Object.values(dObj).length === new Set(Object.values(dObj)).size)&&(Object.values(cObj).length === new Set(Object.values(cObj)).size)){
                 console.log('TRUE!');
                 axios.post(`${myurl}/api/team/${this.props.match.params.teamId}`,subObj,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
                 .then((results)=>{
@@ -96,7 +114,12 @@ class Team extends Component{
                     console.log("Awwwwww :(",error);
                 });
             }else{
-                alert("Please get rid of duplicate entries")
+                if(Object.values(dObj).length === new Set(Object.values(dObj)).size){
+                    alert("Please get rid of duplicate constructor entries")
+                }else{
+                    alert("Please get rid of duplicate driver entries");
+                }
+
             }
         }
 

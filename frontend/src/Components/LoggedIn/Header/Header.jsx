@@ -18,10 +18,21 @@ class Header extends Component{
             localStorage.removeItem('f1creds');
             window.location.href="/";
         }
+        let goToLeagues = ()=>{
+            console.log("going to leagues");
+            window.location.href="/leagues";
+        }
         return(
             <div>
                 <header className="App-header">
                     <h1>{this.props.title}</h1>
+                    {this.props.leagueId &&
+                        <h3>League Id: {this.props.leagueId}</h3>
+                    }
+                    {/* {this.props.teamId &&
+                        <button onClick={goToTeams}>Back to Teams</button>
+                    } */}
+                    <button onClick={goToLeagues}>Back to Leagues</button>
                     <button onClick={logout}>Log out of {decoded.name}</button>
                 </header>
             </div>

@@ -2,7 +2,7 @@ const mysql = require('mysql');
 require('dotenv').config();
 
 console.log('hit index.js!');
-console.log(process.env.CLEARDB_DATABASE_URL);
+console.log(process.env.DB_HOST);
 let sqlLogin = process.env.CLEARDB_DATABASE_URL || {
     host:process.env.DB_HOST,
     user:process.env.DB_USER,
@@ -13,10 +13,16 @@ let sqlLogin = process.env.CLEARDB_DATABASE_URL || {
 
 let connection = mysql.createConnection(sqlLogin);
 
+connection.connect((err)=>{
+    if(err){
+        console.log("There was an error!",err);
+        return;
+    }
+    console.log('connected to MysqlServer!');
+});
 
-module.exports.connect = connection.connect();
+
 module.exports.db = connection;
-module.exports.end = connection.end;
 
 // tables used:
 // constructor: all constructors competing for the F1 Championship 

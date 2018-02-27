@@ -4,7 +4,6 @@ let db = require('../models/index');
 let secretString = "SecretString";
 let signup = (req, res)=>{
     if(req.body && req.body.email &&req.body.password && req.body.name){
-        db.connect;
         db.db.query(`SELECT * FROM user WHERE email = '${req.body.email.toLowerCase()}'`,(error, results)=>{
             if(results && results[0]){
                 console.log('User exists.  Sending failure');
@@ -22,7 +21,6 @@ let signup = (req, res)=>{
                         let token = jwt.encode({id:response.insertId, email:email, password:password, name: name},secretString);
                         res.json({success:true, token: token, msg:"Welcome to FantasyF1 "+jwt.decode(token,secretString).name});
                         console.log("all done signing up, ending connection");
-                        db.end;
                     }
                 });
             }
@@ -35,7 +33,6 @@ let signup = (req, res)=>{
 
 let login = (req, res)=>{
     if(req.body && req.body.email && req.body.password){
-        db.connect;
         db.db.query(`SELECT * FROM user WHERE email = '${req.body.email.toLowerCase()}'`,(error, results, other)=>{
             console.log(results);
             if(results&&!results[0]){
@@ -54,7 +51,6 @@ let login = (req, res)=>{
                         let token = jwt.encode(results[0], secretString);
                         res.json({success:true, token: token, msg:"Welcome back "+jwt.decode(token, secretString).name+"!"});
                         console.log('all done with login connection.  Ending connection');
-                        db.end;
                     }
                 })
             }
