@@ -42,7 +42,7 @@ class Teams extends Component{
                 <Header title={this.props.match.params.leagueName} leagueId={this.props.match.params.leagueId}/>
                 <p className="App-intro">
                 </p>
-                <ol>League Standings{teamList}</ol>
+                <ol><h4>League Standings</h4>{teamList}</ol>
             </div>
         )
     }

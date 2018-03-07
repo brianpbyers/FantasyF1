@@ -5,10 +5,14 @@
 #teamDiv ol{
     color:lightgrey;
     max-width: 30vw;
-    padding-bottom: 3vh;
+    padding-top:1vh;
+    padding-bottom: 2vh;
+    border-radius: 2vh;
+    margin-bottom: 3vh;
 }
 #teamDiv li{
     margin: 0 auto;
+    padding:.5vh;
 }
 #teamDiv h4{
     color:darkred;

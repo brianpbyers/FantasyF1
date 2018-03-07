@@ -5,6 +5,8 @@
 
 ul{
     padding-top:3vh;
+    padding-bottom:2vh;
+    border-radius:2vh;
     min-height:20vh;
     margin: 0 auto;
     max-width: 40vw;
@@ -12,5 +14,6 @@ ul{
     color: white;
 }
 li{
+    padding: .5vh;
     text-align:left
 }

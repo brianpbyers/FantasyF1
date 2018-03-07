@@ -1,15 +1,20 @@
 #teamsDiv{
     background-color: #444444;
     height:100vh;
+    margin: 0 auto;
 }
 ol{
     margin: 0 auto;
     max-width: 40vw;
     background-color: rgba(255,255,255,.3);
     color: white;
+    border-radius:2vh;
+    padding-top:1.5vh;
+    padding-bottom: 1.5vh;
 }
 li{
-    text-align:left
+    text-align:left;
+    padding: .5vh;
 }
 #points{
     width: 20vw;
