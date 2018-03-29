@@ -33,20 +33,13 @@ class Team extends Component{
     render(){
         console.log(this.state);
         console.log(this.state.user);
-        let driverList, constructorList;
+        let driverList;
         if(this.state.canEdit){
             if(this.state && this.state.teamDrivers && this.state.teamDrivers[0]){
                 driverList=this.state.teamDrivers.map((driver,i)=>
                     <li key={driver.id}><Selector ref={`d${i+1}`} allOptions={this.state.drivers} defOpt={driver.id} /></li>
                 )
             };
-            if(this.state && this.state.teamConstructors && this.state.teamConstructors[0]){
-                constructorList=this.state.teamConstructors.map((constructorT,i)=>
-                    <li key={constructorT.id}>
-                        <Selector ref={`c${i+1}`} allOptions={this.state.constructors} defOpt={constructorT.id} />
-                    </li>
-                )
-            }
         }else{
             if(this.state && this.state.teamDrivers && this.state.teamDrivers[0]){
                 driverList=this.state.teamDrivers.map((driver)=>
@@ -55,13 +48,6 @@ class Team extends Component{
                     </li>
                 )
             };
-            if(this.state && this.state.teamConstructors && this.state.teamConstructors[0]){
-                constructorList=this.state.teamConstructors.map((constructorT)=>
-                    <li key={constructorT.id}>
-                        {constructorT.name}
-                    </li>
-                )
-            }
         }
 
         let submitTeam = ()=>{
@@ -78,13 +64,7 @@ class Team extends Component{
                 d8:Number(this.refs.d8.state.value),
                 d9:Number(this.refs.d9.state.value),
                 d10:Number(this.refs.d10.state.value)};
-            let cObj={
-                c1:Number(this.refs.c1.state.value),
-                c2:Number(this.refs.c2.state.value),
-                c3:Number(this.refs.c3.state.value),
-                c4:Number(this.refs.c4.state.value),
-                c5:Number(this.refs.c5.state.value)
-            };
+
             let subObj = {
                 d1:Number(this.refs.d1.state.value),
                 d2:Number(this.refs.d2.state.value),
@@ -96,14 +76,9 @@ class Team extends Component{
                 d8:Number(this.refs.d8.state.value),
                 d9:Number(this.refs.d9.state.value),
                 d10:Number(this.refs.d10.state.value),
-                c1:Number(this.refs.c1.state.value),
-                c2:Number(this.refs.c2.state.value),
-                c3:Number(this.refs.c3.state.value),
-                c4:Number(this.refs.c4.state.value),
-                c5:Number(this.refs.c5.state.value)
             }
             console.log(subObj);
-            if((Object.values(dObj).length === new Set(Object.values(dObj)).size)&&(Object.values(cObj).length === new Set(Object.values(cObj)).size)){
+            if((Object.values(dObj).length === new Set(Object.values(dObj)).size)){
                 console.log('TRUE!');
                 axios.post(`${myurl}/api/team/${this.props.match.params.teamId}`,subObj,{headers:{'Authorization':'Bearer '+localStorage.getItem("f1creds")}})
                 .then((results)=>{
@@ -114,20 +89,14 @@ class Team extends Component{
                     console.log("Awwwwww :(",error);
                 });
             }else{
-                if(Object.values(dObj).length === new Set(Object.values(dObj)).size){
-                    alert("Please get rid of duplicate constructor entries")
-                }else{
-                    alert("Please get rid of duplicate driver entries");
-                }
+                alert("Please get rid of duplicate driver entries");
 
             }
         }
-
         return(
             <div id="teamDiv">
                 <Header title="Team Order"/>
                 <ol><h4>Drivers</h4>{driverList}</ol>
-                <ol><h4>Constructors</h4>{constructorList}</ol>
                 {this.state.canEdit && <button onClick={submitTeam}>Save Changes </button>}
             </div>
         )
