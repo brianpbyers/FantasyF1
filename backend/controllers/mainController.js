@@ -50,7 +50,7 @@ let setUpUser = (user, leagueId, leagueName, req,res)=>{
                                 }else{
                                     console.log("Successfully defaulted Constructors!");
                                     res.json({success:true, leagueId:leagueId, leagueName: leagueName});
-                                    console.log("All done, ending connection");
+                                    console.log("All done, ending connection.  Pssst...  you should not see this!");
                                 }
                             })
                         }
@@ -240,28 +240,74 @@ let checkResults = (req, res, next) =>{
                 console.log('now:',Date.now());
             }
             if(!results[0]||(new Date(results[0].date+" "+results[0].time)<Date.now())){
+                if(results[0]){
+                    let raceId = results[0].id;
+                    console.log('there are results.  Scoring now');
+                    request.get('http://ergast.com/api/f1/current/last/results.json',(err,response,body)=>{
+                        if(err){
+                            console.log('Error getting results',err);
+                        }else{
+                            db.query('SELECT id, driver_ref FROM driver',(err,drivers)=>{
+                                if(err){
+                                    console.log('Could not get drivers.  Error:',err);
+                                }else{
+                                    let driverObj={};
+                                    console.log(drivers);
+                                    drivers.forEach((driver)=>{
+                                        driverObj[driver.driver_ref]=driver.id;
+                                    });
+                                    let raceResults = JSON.parse(body).MRData.RaceTable.Races[0].Results;
+                                    console.log('heres what we got:',raceResults);
+                                    let raceResultsStr='';
+                                    let raceResultsArray = [];
+                                    raceResults.forEach((raceResult)=>{
+                                        raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.Constructor.constructorId}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
+                                        raceResultsArray[raceResult.position]=raceResult.Driver.driverId;
+                                    });
+                                    raceResultsStr=raceResultsStr.slice(0,-1);
+                                    raceResultsArray=raceResultsArray.slice(1,11);
+                                    console.log('race results Array:',raceResultsArray);
+                                    db.query(`ALTER TABLE result MODIFY id INT AUTO_INCREMENT NOT NULL, MODIFY driver_id VARCHAR(50), MODIFY constructor_id VARCHAR(50)`,(error,results)=>{
+                                        if(error){
+                                            console.log('error altering results table:',error);
+                                        }else{
+                                            db.query(`INSERT INTO result (race_id, driver_id, constructor_id, position, position_order, points) VALUES ${raceResultsStr}`,(error, results)=>{
+                                                if(err){
+                                                    console.log('error putting results in:',err);
+                                                }else{
+                                                    console.log('put results in',results);
+                                                }
+                                            });
+    
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    })
+                }
                 console.log('either no races in DB or latest race in DB is old.  Getting next race from Ergast');
-                request.get('http://ergast.com/api/f1/current/next.json',(err,response,body)=>{
-                    console.log('helloooooo world!');
-                    if(err){
-                        console.log('There has been an error getting next race',err);
-                    }else{
-                        raceObj=JSON.parse(body).MRData.RaceTable.Races[0];
-                        let date = raceObj.date;
-                        let time = raceObj.time;
-                        let raceDate = new Date(date + ' '+ time); 
-                        let raceId=raceObj.season+ (raceObj.round.length===1?"0"+raceObj.round:raceObj.round);
-                        db.query(`INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES (${Number(raceId)},${Number(raceObj.season)},${Number(raceObj.round)},"${raceObj.Circuit.circuitId}","${raceObj.raceName}","${date}","${time}")`,(err,results)=>{
-                            if(err){
-                                console.log('Woops!  Error inserting new race!',err);
-                            }else{
-                                console.log('Put new race in!',results);
-                                return next();
-                            }
-                        })
-                    }
-                })
-            }else{
+            //     request.get('http://ergast.com/api/f1/current/next.json',(err,response,body)=>{
+            //         console.log('helloooooo world!');
+            //         if(err){
+            //             console.log('There has been an error getting next race',err);
+            //         }else{
+            //             raceObj=JSON.parse(body).MRData.RaceTable.Races[0];
+            //             let date = raceObj.date;
+            //             let time = raceObj.time;
+            //             let raceDate = new Date(date + ' '+ time); 
+            //             let raceId=raceObj.season+ (raceObj.round.length===1?"0"+raceObj.round:raceObj.round);
+            //             db.query(`INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES (${Number(raceId)},${Number(raceObj.season)},${Number(raceObj.round)},"${raceObj.Circuit.circuitId}","${raceObj.raceName}","${date}","${time}")`,(err,results)=>{
+            //                 if(err){
+            //                     console.log('Woops!  Error inserting new race!',err);
+            //                 }else{
+            //                     console.log('Put new race in!',results);
+            //                     return next();
+            //                 }
+            //             })
+            //         }
+            //     })
+            // }else{
                 console.log('Most recent results are later than now');
                 console.log(results[0]);
                 return next();

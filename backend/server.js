@@ -35,6 +35,6 @@ app.use(bodyParser.json());
 app.use(controller.checkResults);
 
 app.use(express.static(path.join(__dirname, 'build')));
-app.use('/', router);
+app.use('/api', router);
 
 app.listen(process.env.PORT || 3030, console.log('Potato server is running on port:', process.env.PORT ||3030));
