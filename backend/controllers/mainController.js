@@ -165,20 +165,28 @@ let postTeam = (req, res)=>{
 }
 
 let canUserEdit = (userId, teamId, callback)=>{
-    db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
+    db.query(`SELECT * FROM race ORDER BY id DESC LIMIT 1`,(error,race)=>{
         if(error){
-            console.log("there has been an error finding user/team combo",error);
-            callback(false);
-        }else if(results && results[0]){
-            console.log('results of user/team search:',results);
-            //make sure times look okay too then
-            callback(true);
+            console.log('error grabbing race!',error);
         }else{
-            console.log('user should not be able to edit this team',results);
-            callback(false);
+            let nextRaceTime = new Date(results[0].date+" "+results[0].time);
+            db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
+                if(error){
+                    console.log("there has been an error finding user/team combo",error);
+                    callback(false);
+                }else if(results && results[0] && nextRaceTime-(2*24*60*60*1000)>Date.now()){
+                    //if the next race date minus 2 days is still later than now, you can edit.
+                    console.log('results of user/team search:',results);
+                    //make sure times look okay too then
+                    callback(true);
+                }else{
+                    console.log('user should not be able to edit this team',results);
+                    callback(false);
+                }
+        
+            });
         }
-
-    })
+    });
 }
 
 let getTeam = (req, res)=>{
@@ -262,7 +270,7 @@ let checkResults = (req, res, next) =>{
                                     //sets up sql query and results array
                                     raceResults.forEach((raceResult)=>{
                                         raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
-                                        raceResultsArray[raceResult.position]=raceResult.Driver.driverId;
+                                        raceResultsArray[raceResult.position]=driverObj[raceResult.Driver.driverId];
                                     });
                                     raceResultsStr=raceResultsStr.slice(0,-1);
                                     raceResultsArray=raceResultsArray.slice(1,11);
