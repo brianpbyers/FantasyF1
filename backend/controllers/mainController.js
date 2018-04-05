@@ -169,7 +169,7 @@ let canUserEdit = (userId, teamId, callback)=>{
         if(error){
             console.log('error grabbing race!',error);
         }else{
-            let nextRaceTime = new Date(results[0].date+" "+results[0].time);
+            let nextRaceTime = new Date(race[0].date+" "+race[0].time);
             db.query(`SELECT * FROM team WHERE id=${teamId} AND user_id=${userId}`,(error,results)=>{
                 if(error){
                     console.log("there has been an error finding user/team combo",error);
