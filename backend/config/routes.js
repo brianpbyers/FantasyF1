@@ -15,7 +15,7 @@ router.route('/login')
     .post(authController.login);
 
 router.route('/leagues')
-    .get(authController.hasGoodToken, mainController.getLeagues)
+    .get(authController.hasGoodToken, mainController.checkResults, mainController.getLeagues)
     .post(authController.hasGoodToken, mainController.postLeague);
 
 router.route('/league/join')

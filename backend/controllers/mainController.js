@@ -235,81 +235,186 @@ let checkResults = (req, res, next) =>{
         if(error){
             console.log('Error getting most recent race:',error);
         }else{
-            if(results[0]){
-                console.log('new date:', new Date(results[0].date+" "+results[0].time));
-                console.log('now:',Date.now());
-            }
+            //if there is no race or if the latest race is old:
             if(!results[0]||(new Date(results[0].date+" "+results[0].time)<Date.now())){
+                //if there are races, then score the last race
                 if(results[0]){
                     let raceId = results[0].id;
-                    console.log('there are results.  Scoring now');
+                    //getting results of last race from api
+                    console.log('getting results of last race from api')
                     request.get('http://ergast.com/api/f1/current/last/results.json',(err,response,body)=>{
                         if(err){
                             console.log('Error getting results',err);
                         }else{
+                            //getting all available drivers
                             db.query('SELECT id, driver_ref FROM driver',(err,drivers)=>{
                                 if(err){
                                     console.log('Could not get drivers.  Error:',err);
                                 }else{
                                     let driverObj={};
-                                    console.log(drivers);
+                                    //creates a map for driver names to their ids
                                     drivers.forEach((driver)=>{
                                         driverObj[driver.driver_ref]=driver.id;
                                     });
                                     let raceResults = JSON.parse(body).MRData.RaceTable.Races[0].Results;
-                                    console.log('heres what we got:',raceResults);
                                     let raceResultsStr='';
                                     let raceResultsArray = [];
+                                    //sets up sql query and results array
                                     raceResults.forEach((raceResult)=>{
-                                        raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.Constructor.constructorId}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
+                                        raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
                                         raceResultsArray[raceResult.position]=raceResult.Driver.driverId;
                                     });
                                     raceResultsStr=raceResultsStr.slice(0,-1);
                                     raceResultsArray=raceResultsArray.slice(1,11);
-                                    console.log('race results Array:',raceResultsArray);
-                                    db.query(`ALTER TABLE result MODIFY id INT AUTO_INCREMENT NOT NULL, MODIFY driver_id VARCHAR(50), MODIFY constructor_id VARCHAR(50)`,(error,results)=>{
-                                        if(error){
-                                            console.log('error altering results table:',error);
+                                    console.log('raceResultsStr:',raceResultsStr);
+                                        //inputs race results
+                                    db.query(`INSERT INTO result (race_id, driver_id, position, position_order, points) VALUES ${raceResultsStr}`,(error, results)=>{
+                                        if(err){
+                                            console.log('error putting results in:',err);
                                         }else{
-                                            db.query(`INSERT INTO result (race_id, driver_id, constructor_id, position, position_order, points) VALUES ${raceResultsStr}`,(error, results)=>{
+                                            console.log('put results in',results);
+                                            //updates teams
+                                            db.query(`UPDATE team SET race_id = ${raceId} WHERE race_id = 0;`,(err,updated)=>{
                                                 if(err){
-                                                    console.log('error putting results in:',err);
+                                                    console.log('error updating teams:',err);
                                                 }else{
-                                                    console.log('put results in',results);
+                                                    console.log('updated teams, now making a copy:');
+                                                    db.query(`INSERT INTO team (NAME, user_id, league_id, race_id, score, rank, points) SELECT NAME, user_id, league_id, 0, score, rank, points FROM team WHERE race_id = ${raceId};`,(err,results)=>{
+                                                        if(err){
+                                                            console.log('error copying teams:',err);
+                                                        }else{
+                                                            //creating a copy of team_driver for the next race (race 0)
+                                                            db.query(`INSERT INTO team_driver(team_id, driver_id, position) SELECT x.zeroID, y.driver_id, y.position  FROM (SELECT zero.id AS zeroID, raceRes.id AS raceResID FROM team zero, team raceRes WHERE zero.league_id = raceRes.league_id AND zero.user_id = raceRes.user_id AND zero.race_id <> raceRes.race_id AND raceRes.race_id = ${raceId} AND zero.race_id = 0) x  JOIN (SELECT team_id, driver_id, position  FROM team_driver  LEFT JOIN team  ON team_driver.team_id = team.id  WHERE team.race_id=${raceId}) y ON x.raceResID=y.team_id;`,(err,results)=>{
+                                                                if(err){
+                                                                    console.log('error copying team_driver?:',err);
+                                                                }else{
+                                                                    //grabbing all teams for last race
+                                                                    db.query(`SELECT team_driver.team_id, team_driver.driver_id, team_driver.position FROM team_driver JOIN team ON team.id = team_driver.team_id WHERE team.race_id=${raceId}`,(err,results)=>{
+                                                                        if(err){
+                                                                            console.log('error getting shtuffback!',err);
+                                                                        }else{
+                                                                            let queryString='UPDATE team SET score = CASE';
+                                                                            let points = [25,18,15,12,10,8,6,4,2,1];
+                                                                            points[-1]=0;
+                                                                            for(let i = 0; i<results.length; i=i+10){
+                                                                                let team = results.slice(i,i+10);
+                                                                                let counter = 0;
+                                                                                let score = 0;
+                                                                                for(let j = 0; j<team.length; ++j){
+                                                                                    if(raceResultsArray.indexOf(team[j].driver_id)>-1){
+                                                                                        counter++;
+                                                                                    }
+                                                                                    let divisor = raceResultsArray[j]===team[j].driver_id?1:2;
+                                                                                    if(Math.abs(j-raceResultsArray.indexOf(team[j].driver_id))<=1){
+                                                                                        score=score + points[raceResultsArray.indexOf(team[j].driver_id)]/divisor;
+                                                                                    }
+                                                                                }
+                                                                                score=score + counter**2;
+                                                                                queryString+=` WHEN id=${team[0].team_id} THEN ${score}`;
+                                                                            }
+                                                                            queryString += ` ELSE 0 END WHERE race_id =${raceId}`;
+                                                                            //sets scores for race
+                                                                            db.query(queryString,(err,results)=>{
+                                                                                if(err){
+                                                                                    console.log("error updating team score",err);
+                                                                                }else{
+                                                                                    //grabbing all teams ordered by league then score to assign points
+                                                                                    db.query(`SELECT id, user_id, league_id, score FROM team WHERE race_id = ${raceId} ORDER BY league_id,score DESC`,(err,results)=>{
+                                                                                        if(err){
+                                                                                            console.log('there has been an error!',err);
+                                                                                        }else{
+                                                                                            let leagueSet = new Set(results.map((eachRow)=>{return eachRow.league_id}));
+                                                                                            leagueSet = [...leagueSet];
+                                                                                            let l = 0;
+                                                                                            let queryString = `UPDATE team SET points = CASE`;
+                                                                                            let updatePointsString = `UPDATE team SET points = CASE`;
+                                                                                            for(let i = 0;i<leagueSet.length;++i){
+                                                                                                let j = l;
+                                                                                                for(let k=j; results[k]&&results[k].league_id===leagueSet[i];++k){
+                                                                                                    queryString +=` WHEN id=${results[k].id} THEN ${points[k-j]||0}`;
+                                                                                                    updatePointsString += ` WHEN user_id=${results[k].user_id} AND league_id=${results[k].league_id} THEN points + ${points[k-j]||0}`
+                                                                                                    ++l;
+                                                                                                }
+                                                                                            }
+                                                                                            queryString += ` ELSE 0 END WHERE race_id=${raceId}`;
+                                                                                            updatePointsString += ` ELSE points END WHERE race_id=0`;
+                                                                                            //assigning points to the race!
+                                                                                            db.query(queryString,(err,results)=>{
+                                                                                                if(err){
+                                                                                                    console.log('error updating teams!',err);
+                                                                                                }else{
+                                                                                                    //now we've gotta score everyone!
+                                                                                                    db.query(updatePointsString,(err,results)=>{
+                                                                                                        if(err){
+                                                                                                            console.log('error updating points:',err);
+                                                                                                        }else{
+                                                                                                            //now grabbing the next race to save into race
+                                                                                                            request.get('http://ergast.com/api/f1/current/next.json',(err,response,body)=>{
+                                                                                                                console.log('helloooooo world!');
+                                                                                                                if(err){
+                                                                                                                    console.log('There has been an error getting next race',err);
+                                                                                                                }else{
+                                                                                                                    raceObj=JSON.parse(body).MRData.RaceTable.Races[0];
+                                                                                                                    let date = raceObj.date;
+                                                                                                                    let time = raceObj.time;
+                                                                                                                    let raceDate = new Date(date + ' '+ time); 
+                                                                                                                    let raceId=raceObj.season+ (raceObj.round.length===1?"0"+raceObj.round:raceObj.round);
+                                                                                                                    db.query(`INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES (${Number(raceId)},${Number(raceObj.season)},${Number(raceObj.round)},"${raceObj.Circuit.circuitId}","${raceObj.raceName}","${date}","${time}")`,(err,results)=>{
+                                                                                                                        if(err){
+                                                                                                                            console.log('Woops!  Error inserting new race!',err);
+                                                                                                                        }else{
+                                                                                                                            console.log('Put new race in!',results);
+                                                                                                                            return next();
+                                                                                                                        }
+                                                                                                                    })
+                                                                                                                }
+                                                                                                            })
+                                                                                                        }
+                                                                                                    })
+                                                                                                }
+                                                                                            })
+                                                                                        }
+                                                                                    })
+                                                                                }
+                                                                            })
+                                                                        }
+                                                                    })
+                                                                }
+                                                            })
+                                                        }
+                                                    })
                                                 }
-                                            });
-    
+                                            })
                                         }
                                     });
                                 }
                             });
                         }
                     })
+                }else{
+                    //there were no races found...  inputting the first one.                
+                    request.get('http://ergast.com/api/f1/current/last.json',(err,response,body)=>{
+                        if(err){
+                            console.log('There has been an error getting the race',err);
+                        }else{
+                            raceObj=JSON.parse(body).MRData.RaceTable.Races[0];
+                            let date = raceObj.date;
+                            let time = raceObj.time;
+                            let raceDate = new Date(date + ' '+ time); 
+                            let raceId=raceObj.season+ (raceObj.round.length===1?"0"+raceObj.round:raceObj.round);
+                            db.query(`INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES (${Number(raceId)},${Number(raceObj.season)},${Number(raceObj.round)},"${raceObj.Circuit.circuitId}","${raceObj.raceName}","${date}","${time}")`,(err,results)=>{
+                                if(err){
+                                    console.log('Woops!  Error inserting new race!',err);
+                                }else{
+                                    console.log('Put new race in!',results);
+                                    return next();
+                                }
+                            })
+                        }
+                    })
                 }
-                console.log('either no races in DB or latest race in DB is old.  Getting next race from Ergast');
-            //     request.get('http://ergast.com/api/f1/current/next.json',(err,response,body)=>{
-            //         console.log('helloooooo world!');
-            //         if(err){
-            //             console.log('There has been an error getting next race',err);
-            //         }else{
-            //             raceObj=JSON.parse(body).MRData.RaceTable.Races[0];
-            //             let date = raceObj.date;
-            //             let time = raceObj.time;
-            //             let raceDate = new Date(date + ' '+ time); 
-            //             let raceId=raceObj.season+ (raceObj.round.length===1?"0"+raceObj.round:raceObj.round);
-            //             db.query(`INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES (${Number(raceId)},${Number(raceObj.season)},${Number(raceObj.round)},"${raceObj.Circuit.circuitId}","${raceObj.raceName}","${date}","${time}")`,(err,results)=>{
-            //                 if(err){
-            //                     console.log('Woops!  Error inserting new race!',err);
-            //                 }else{
-            //                     console.log('Put new race in!',results);
-            //                     return next();
-            //                 }
-            //             })
-            //         }
-            //     })
-            // }else{
+            }else{
                 console.log('Most recent results are later than now');
-                console.log(results[0]);
                 return next();
             }
         }

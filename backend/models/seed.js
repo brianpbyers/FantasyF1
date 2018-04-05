@@ -295,144 +295,145 @@ db.query('ALTER TABLE race MODIFY circuit_id VARCHAR(50), MODIFY date VARCHAR(50
         console.log('error altering table:',error);
     }else{
         console.log('success altering table.  moving on:',results);
-        db.query('INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES ("201801", "2018", "1", "albert_park", "Australian Grand Prix", "2018-03-25","05:10:00Z")',(err,res)=>{
-            if(err){
-                console.log("error putting race 1 in:",err)
-            }else{
-                console.log('put race 1 in:',res);
-                let raceId=201801;
-                request.get('http://ergast.com/api/f1/current/last/results.json',(err,response,body)=>{
-                    if(err){
-                        console.log('Error getting results',err);
-                    }else{
-                        db.query('SELECT id, driver_ref FROM driver',(err,drivers)=>{
-                            if(err){
-                                console.log('Could not get drivers.  Error:',err);
-                            }else{
-                                let driverObj={};
-                                console.log(drivers);
-                                drivers.forEach((driver)=>{
-                                    driverObj[driver.driver_ref]=driver.id;
-                                });
-                                let raceResults = JSON.parse(body).MRData.RaceTable.Races[0].Results;
-                                console.log('heres what we got:',raceResults);
-                                let raceResultsStr='';
-                                let raceResultsArray = [];
-                                raceResults.forEach((raceResult)=>{
-                                    raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
-                                    raceResultsArray[raceResult.position]=driverObj[raceResult.Driver.driverId];
-                                });
-                                raceResultsStr=raceResultsStr.slice(0,-1);
-                                raceResultsArray=raceResultsArray.slice(1,11);
-                                console.log('race results Array:',raceResultsArray);
-                                db.query(`ALTER TABLE result MODIFY id INT AUTO_INCREMENT NOT NULL, MODIFY constructor_id VARCHAR(50)`,(error,results)=>{
-                                    if(error){
-                                        console.log('error altering results table:',error);
-                                    }else{
-                                        //inputs race results
-                                        db.query(`INSERT INTO result (race_id, driver_id, position, position_order, points) VALUES ${raceResultsStr}`,(error, results)=>{
-                                            if(err){
-                                                console.log('error putting results in:',err);
-                                            }else{
-                                                console.log('put results in',results);
-                                                //updates teams
-                                                db.query(`UPDATE team SET race_id = ${raceId} WHERE race_id = 0;`,(err,updated)=>{
-                                                    if(err){
-                                                        console.log('error updating teams:',err);
-                                                    }else{
-                                                        console.log('updated teams, now making a copy:');
-                                                        db.query(`INSERT INTO team (NAME, user_id, league_id, race_id, score, rank, points) SELECT NAME, user_id, league_id, 0, score, rank, points FROM team WHERE race_id = ${raceId};`,(err,results)=>{
-                                                            if(err){
-                                                                console.log('error copying teams:',err);
-                                                            }else{
-                                                                db.query(`INSERT INTO team_driver(team_id, driver_id, position) SELECT x.zeroID, y.driver_id, y.position  FROM (SELECT zero.id AS zeroID, raceRes.id AS raceResID FROM team zero, team raceRes WHERE zero.league_id = raceRes.league_id AND zero.user_id = raceRes.user_id AND zero.race_id <> raceRes.race_id AND raceRes.race_id = ${raceId} AND zero.race_id = 0) x  JOIN (SELECT team_id, driver_id, position  FROM team_driver  LEFT JOIN team  ON team_driver.team_id = team.id  WHERE team.race_id=${raceId}) y ON x.raceResID=y.team_id;`,(err,results)=>{
-                                                                    if(err){
-                                                                        console.log('error copying team_driver?:',err);
-                                                                    }else{
-                                                                        console.log('done!',results);
-                                                                        //grabbing all teams
-                                                                        db.query(`SELECT team_driver.team_id, team_driver.driver_id, team_driver.position FROM team_driver JOIN team ON team.id = team_driver.team_id WHERE team.race_id=${raceId}`,(err,results)=>{
-                                                                            if(err){
-                                                                                console.log('error getting shtuffback!',err);
-                                                                            }else{
-                                                                                console.log('we got results!',results);
-                                                                                console.log('race results array:',raceResultsArray);
-                                                                                let queryString='UPDATE team SET score = CASE';
-                                                                                let points = [25,18,15,12,10,8,6,4,2,1];
-                                                                                points[-1]=0;
-                                                                                for(let i = 0; i<results.length; i=i+10){
-                                                                                    let team = results.slice(i,i+10);
-                                                                                    let counter = 0;
-                                                                                    let score = 0;
-                                                                                    for(let j = 0; j<team.length; ++j){
-                                                                                        if(raceResultsArray.indexOf(team[j].driver_id)>-1){
-                                                                                            counter++;
-                                                                                        }
-                                                                                        let divisor = raceResultsArray[j]===team[j].driver_id?1:2;
-                                                                                        if(Math.abs(j-raceResultsArray.indexOf(team[j].driver_id))<=1){
-                                                                                            score=score + points[raceResultsArray.indexOf(team[j].driver_id)]/divisor;
-                                                                                        }
-                                                                                    }
-                                                                                    console.log(score);
-                                                                                    score=score + counter**2;
-                                                                                    queryString+=` WHEN id=${team[0].team_id} THEN ${score}`;
-                                                                                }
-                                                                                queryString += ` ELSE 0 END WHERE race_id =${raceId}`;
-                                                                                db.query(queryString,(err,results)=>{
-                                                                                    if(err){
-                                                                                        console.log("error updating team score",err);
-                                                                                    }else{
-                                                                                        console.log('success!',results);
-                                                                                        db.query(`SELECT id, league_id, score FROM team WHERE race_id = ${raceId} ORDER BY league_id,score DESC`,(err,results)=>{
-                                                                                            if(err){
-                                                                                                console.log('there has been an error!',err);
-                                                                                            }else{
-                                                                                                console.log("success!",results);
-                                                                                                let leagueSet = new Set(results.map((eachRow)=>{return eachRow.league_id}));
-                                                                                                leagueSet = [...leagueSet];
-                                                                                                let l = 0;
-                                                                                                let queryString = `UPDATE team SET points = CASE`;
-                                                                                                console.log('potatoes!',leagueSet.length);
-                                                                                                for(let i = 0;i<leagueSet.length;++i){
-                                                                                                    console.log('i is ',i);
-                                                                                                    let j = l;
-                                                                                                    console.log(`Starting league: ${leagueSet[i]}.  J is ${j}.  Result we're working on is ${results[j].id};`);
-                                                                                                    for(let k=j; results[k]&&results[k].league_id===leagueSet[i];++k){
-                                                                                                        console.log(`league: ${results[k].id} points: ${points[k-j]||0}`);
-                                                                                                        queryString +=` WHEN id=${results[k].id} THEN ${points[k-j]||0}`;
-                                                                                                        ++l;
-                                                                                                    }
-                                                                                                }
-                                                                                                queryString += ` ELSE 0 END WHERE race_id=${raceId}`;
-                                                                                                db.query(queryString,(err,results)=>{
-                                                                                                    if(err){
-                                                                                                        console.log('error updating teams!',err);
-                                                                                                    }else{
-                                                                                                        console.log('SUCCESS!',results);
-                                                                                                        process.exit();
-                                                                                                    }
-                                                                                                })
-                                                                                            }
-                                                                                        })
-                                                                                    }
-                                                                                })
-                                                                            }
-                                                                        })
-                                                                    }
-                                                                })
-                                                            }
-                                                        })
-                                                    }
-                                                })
-                                            }
-                                        });
-                                    }
-                                });
-                            }
-                        });
-                    }
-                })
-            }
-        });
+        process.exit();
+        // db.query('INSERT INTO race (id, year, round, circuit_id, name, date, time) VALUES ("201801", "2018", "1", "albert_park", "Australian Grand Prix", "2018-03-25","05:10:00Z")',(err,res)=>{
+        //     if(err){
+        //         console.log("error putting race 1 in:",err)
+        //     }else{
+        //         console.log('put race 1 in:',res);
+        //         let raceId=201801;
+        //         request.get('http://ergast.com/api/f1/current/last/results.json',(err,response,body)=>{
+        //             if(err){
+        //                 console.log('Error getting results',err);
+        //             }else{
+        //                 db.query('SELECT id, driver_ref FROM driver',(err,drivers)=>{
+        //                     if(err){
+        //                         console.log('Could not get drivers.  Error:',err);
+        //                     }else{
+        //                         let driverObj={};
+        //                         console.log(drivers);
+        //                         drivers.forEach((driver)=>{
+        //                             driverObj[driver.driver_ref]=driver.id;
+        //                         });
+        //                         let raceResults = JSON.parse(body).MRData.RaceTable.Races[0].Results;
+        //                         console.log('heres what we got:',raceResults);
+        //                         let raceResultsStr='';
+        //                         let raceResultsArray = [];
+        //                         raceResults.forEach((raceResult)=>{
+        //                             raceResultsStr+=`(${raceId},'${driverObj[raceResult.Driver.driverId]}','${raceResult.positionText}${raceResult.status}',${raceResult.position},${raceResult.points}),`;
+        //                             raceResultsArray[raceResult.position]=driverObj[raceResult.Driver.driverId];
+        //                         });
+        //                         raceResultsStr=raceResultsStr.slice(0,-1);
+        //                         raceResultsArray=raceResultsArray.slice(1,11);
+        //                         console.log('race results Array:',raceResultsArray);
+        //                         db.query(`ALTER TABLE result MODIFY id INT AUTO_INCREMENT NOT NULL, MODIFY constructor_id VARCHAR(50)`,(error,results)=>{
+        //                             if(error){
+        //                                 console.log('error altering results table:',error);
+        //                             }else{
+        //                                 //inputs race results
+        //                                 db.query(`INSERT INTO result (race_id, driver_id, position, position_order, points) VALUES ${raceResultsStr}`,(error, results)=>{
+        //                                     if(err){
+        //                                         console.log('error putting results in:',err);
+        //                                     }else{
+        //                                         console.log('put results in',results);
+        //                                         //updates teams
+        //                                         db.query(`UPDATE team SET race_id = ${raceId} WHERE race_id = 0;`,(err,updated)=>{
+        //                                             if(err){
+        //                                                 console.log('error updating teams:',err);
+        //                                             }else{
+        //                                                 console.log('updated teams, now making a copy:');
+        //                                                 db.query(`INSERT INTO team (NAME, user_id, league_id, race_id, score, rank, points) SELECT NAME, user_id, league_id, 0, score, rank, points FROM team WHERE race_id = ${raceId};`,(err,results)=>{
+        //                                                     if(err){
+        //                                                         console.log('error copying teams:',err);
+        //                                                     }else{
+        //                                                         db.query(`INSERT INTO team_driver(team_id, driver_id, position) SELECT x.zeroID, y.driver_id, y.position  FROM (SELECT zero.id AS zeroID, raceRes.id AS raceResID FROM team zero, team raceRes WHERE zero.league_id = raceRes.league_id AND zero.user_id = raceRes.user_id AND zero.race_id <> raceRes.race_id AND raceRes.race_id = ${raceId} AND zero.race_id = 0) x  JOIN (SELECT team_id, driver_id, position  FROM team_driver  LEFT JOIN team  ON team_driver.team_id = team.id  WHERE team.race_id=${raceId}) y ON x.raceResID=y.team_id;`,(err,results)=>{
+        //                                                             if(err){
+        //                                                                 console.log('error copying team_driver?:',err);
+        //                                                             }else{
+        //                                                                 console.log('done!',results);
+        //                                                                 //grabbing all teams
+        //                                                                 db.query(`SELECT team_driver.team_id, team_driver.driver_id, team_driver.position FROM team_driver JOIN team ON team.id = team_driver.team_id WHERE team.race_id=${raceId}`,(err,results)=>{
+        //                                                                     if(err){
+        //                                                                         console.log('error getting shtuffback!',err);
+        //                                                                     }else{
+        //                                                                         console.log('we got results!',results);
+        //                                                                         console.log('race results array:',raceResultsArray);
+        //                                                                         let queryString='UPDATE team SET score = CASE';
+        //                                                                         let points = [25,18,15,12,10,8,6,4,2,1];
+        //                                                                         points[-1]=0;
+        //                                                                         for(let i = 0; i<results.length; i=i+10){
+        //                                                                             let team = results.slice(i,i+10);
+        //                                                                             let counter = 0;
+        //                                                                             let score = 0;
+        //                                                                             for(let j = 0; j<team.length; ++j){
+        //                                                                                 if(raceResultsArray.indexOf(team[j].driver_id)>-1){
+        //                                                                                     counter++;
+        //                                                                                 }
+        //                                                                                 let divisor = raceResultsArray[j]===team[j].driver_id?1:2;
+        //                                                                                 if(Math.abs(j-raceResultsArray.indexOf(team[j].driver_id))<=1){
+        //                                                                                     score=score + points[raceResultsArray.indexOf(team[j].driver_id)]/divisor;
+        //                                                                                 }
+        //                                                                             }
+        //                                                                             console.log(score);
+        //                                                                             score=score + counter**2;
+        //                                                                             queryString+=` WHEN id=${team[0].team_id} THEN ${score}`;
+        //                                                                         }
+        //                                                                         queryString += ` ELSE 0 END WHERE race_id =${raceId}`;
+        //                                                                         db.query(queryString,(err,results)=>{
+        //                                                                             if(err){
+        //                                                                                 console.log("error updating team score",err);
+        //                                                                             }else{
+        //                                                                                 console.log('success!',results);
+        //                                                                                 db.query(`SELECT id, league_id, score FROM team WHERE race_id = ${raceId} ORDER BY league_id,score DESC`,(err,results)=>{
+        //                                                                                     if(err){
+        //                                                                                         console.log('there has been an error!',err);
+        //                                                                                     }else{
+        //                                                                                         console.log("success!",results);
+        //                                                                                         let leagueSet = new Set(results.map((eachRow)=>{return eachRow.league_id}));
+        //                                                                                         leagueSet = [...leagueSet];
+        //                                                                                         let l = 0;
+        //                                                                                         let queryString = `UPDATE team SET points = CASE`;
+        //                                                                                         console.log('potatoes!',leagueSet.length);
+        //                                                                                         for(let i = 0;i<leagueSet.length;++i){
+        //                                                                                             console.log('i is ',i);
+        //                                                                                             let j = l;
+        //                                                                                             console.log(`Starting league: ${leagueSet[i]}.  J is ${j}.  Result we're working on is ${results[j].id};`);
+        //                                                                                             for(let k=j; results[k]&&results[k].league_id===leagueSet[i];++k){
+        //                                                                                                 console.log(`league: ${results[k].id} points: ${points[k-j]||0}`);
+        //                                                                                                 queryString +=` WHEN id=${results[k].id} THEN ${points[k-j]||0}`;
+        //                                                                                                 ++l;
+        //                                                                                             }
+        //                                                                                         }
+        //                                                                                         queryString += ` ELSE 0 END WHERE race_id=${raceId}`;
+        //                                                                                         db.query(queryString,(err,results)=>{
+        //                                                                                             if(err){
+        //                                                                                                 console.log('error updating teams!',err);
+        //                                                                                             }else{
+        //                                                                                                 console.log('SUCCESS!',results);
+        //                                                                                                 process.exit();
+        //                                                                                             }
+        //                                                                                         })
+        //                                                                                     }
+        //                                                                                 })
+        //                                                                             }
+        //                                                                         })
+        //                                                                     }
+        //                                                                 })
+        //                                                             }
+        //                                                         })
+        //                                                     }
+        //                                                 })
+        //                                             }
+        //                                         })
+        //                                     }
+        //                                 });
+        //                             }
+        //                         });
+        //                     }
+        //                 });
+        //             }
+        //         })
+        //     }
+        // });
     }
 })
