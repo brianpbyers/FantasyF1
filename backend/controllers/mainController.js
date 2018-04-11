@@ -244,7 +244,8 @@ let checkResults = (req, res, next) =>{
             console.log('Error getting most recent race:',error);
         }else{
             //if there is no race or if the latest race is old:
-            if(!results[0]||(new Date(results[0].date+" "+results[0].time)<Date.now())){
+            //updated to say if the latest race data is at least 8 hours old.  I think this is causing a bug in my code
+            if(!results[0]||((new Date(results[0].date+" "+results[0].time)+28800000)<Date.now())){
                 //if there are races, then score the last race
                 if(results[0]){
                     let raceId = results[0].id;
@@ -286,7 +287,7 @@ let checkResults = (req, res, next) =>{
                                                 if(err){
                                                     console.log('error updating teams:',err);
                                                 }else{
-                                                    console.log('updated teams, now making a copy:');
+                                                    console.log('updated teams, now making a copy:',updated);
                                                     db.query(`INSERT INTO team (NAME, user_id, league_id, race_id, score, rank, points) SELECT NAME, user_id, league_id, 0, score, rank, points FROM team WHERE race_id = ${raceId};`,(err,results)=>{
                                                         if(err){
                                                             console.log('error copying teams:',err);
