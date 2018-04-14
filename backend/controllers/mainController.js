@@ -245,7 +245,7 @@ let checkResults = (req, res, next) =>{
         }else{
             //if there is no race or if the latest race is old:
             //updated to say if the latest race data is at least 8 hours old.  I think this is causing a bug in my code
-            if(!results[0]||((new Date(results[0].date+" "+results[0].time)+28800000)<Date.now())){
+            if(!results[0]||((new Date(results[0].date+" "+results[0].time))<Date.now()-28800000)){
                 //if there are races, then score the last race
                 if(results[0]){
                     let raceId = results[0].id;
@@ -424,6 +424,8 @@ let checkResults = (req, res, next) =>{
                 }
             }else{
                 console.log('Most recent results are later than now');
+                console.log('results plus8 hrs:',new Date(results[0].date+" "+results[0].time)+28800000);
+                console.log('date dot now is:  ',Date.now());
                 return next();
             }
         }
