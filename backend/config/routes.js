@@ -29,5 +29,9 @@ router.route('/team/:teamId')
     .get(authController.hasGoodToken, mainController.getTeam)
     .post(authController.hasGoodToken, mainController.postTeam);
 
+router.route('/updateTonysPW')
+    .get(authController.getUpdatePassword)
+    .post(authController.updatePassword);
+
 
 module.exports = router;

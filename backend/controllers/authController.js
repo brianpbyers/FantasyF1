@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jwt-simple');
+const path = require('path');
 let db = require('../models/index');
 let secretString = "SecretString";
 let signup = (req, res)=>{
@@ -29,6 +30,24 @@ let signup = (req, res)=>{
         console.log('Incomplete form on signup');
         res.json({success: false, msg:"Please complete all fields"});
     }
+}
+
+let getUpdatePassword = (req, res)=>{
+    res.sendFile(path.resolve('./dist/index.html'));
+}
+
+let updatePassword = (req, res)=>{
+    console.log('got to updatePassword!');
+    let password = bcrypt.hashSync(req.body.password, bcrypt.genSaltSync());
+    db.db.query(`UPDATE user SET password = '${password}' WHERE email = 'antolindiaz@gmail.com';`,(error, results)=>{
+        if(error){
+            console.log('error updating password',error);
+            res.status(403).json({success:false, msg:"There has been an error updating your password.  Please notify the administrator"});
+        }else{
+            console.log('Success updating password');
+            res.redirect('/');
+        }
+    })
 }
 
 let login = (req, res)=>{
@@ -76,6 +95,8 @@ let decodeToken = (req)=>{
     return jwt.decode(req.headers.authorization.split(' ')[1],secretString);
 }
 
+module.exports.getUpdatePassword = getUpdatePassword;
+module.exports.updatePassword = updatePassword;
 module.exports.signup = signup;
 module.exports.login = login;
 module.exports.hasGoodToken = hasGoodToken;
